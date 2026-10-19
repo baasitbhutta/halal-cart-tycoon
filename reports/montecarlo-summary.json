@@ -1,0 +1,99 @@
+{
+  "generatedAt": "2026-10-19T21:04:51.829Z",
+  "seeds": 200,
+  "days": 30,
+  "targets": {
+    "cvLow": 0.9,
+    "cvHigh": 1.3,
+    "p10OverMeanAbove": -0.5,
+    "meanRecoveryDaysBelow": 3,
+    "maxRecoveryDays": 10,
+    "decisionDominanceAbove": 1,
+    "bankruptcyRateBelow": 0.05
+  },
+  "verdicts": [
+    {
+      "preset": "standard",
+      "mean": 32.52112333333372,
+      "cv": 0.9569162064950181,
+      "p10": -4.37,
+      "meanRecoveryDays": 2.1112507856693905,
+      "maxRecoveryDays": 16,
+      "markovWorstRecovery": null,
+      "decisionDominance": 1.2093053918599488,
+      "pctLossDays": 14.283333333333333,
+      "bankruptRuns": 0,
+      "seeds": 200,
+      "pass": {
+        "cv": true,
+        "p10": true,
+        "recovery": false,
+        "dominance": true,
+        "bankruptcy": true
+      },
+      "allPass": false
+    },
+    {
+      "preset": "volatile",
+      "mean": 30.48001833333378,
+      "cv": 1.439892045850029,
+      "p10": -22.21,
+      "meanRecoveryDays": 2.190599173553719,
+      "maxRecoveryDays": 13,
+      "markovWorstRecovery": null,
+      "decisionDominance": 0.8089124621696907,
+      "pctLossDays": 29.433333333333334,
+      "bankruptRuns": 0,
+      "seeds": 200,
+      "pass": {
+        "cv": false,
+        "p10": false,
+        "recovery": false,
+        "dominance": false,
+        "bankruptcy": true
+      },
+      "allPass": false
+    },
+    {
+      "preset": "flat",
+      "mean": 27.354170000000284,
+      "cv": 0.987753872314178,
+      "p10": -7.98,
+      "meanRecoveryDays": 2.0610484406104845,
+      "maxRecoveryDays": 17,
+      "markovWorstRecovery": null,
+      "decisionDominance": 1.2017695519977722,
+      "pctLossDays": 15.95,
+      "bankruptRuns": 0,
+      "seeds": 200,
+      "pass": {
+        "cv": true,
+        "p10": true,
+        "recovery": false,
+        "dominance": true,
+        "bankruptcy": true
+      },
+      "allPass": false
+    }
+  ],
+  "strategyMeans": {
+    "standard": {
+      "sensible": 32.52,
+      "greedy": -5.11,
+      "sloppy": 27.59,
+      "cheapskate": 4.74
+    },
+    "volatile": {
+      "sensible": 30.48,
+      "greedy": -5.02,
+      "sloppy": 26.3,
+      "cheapskate": 2.98
+    },
+    "flat": {
+      "sensible": 27.35,
+      "greedy": -5.12,
+      "sloppy": 23.71,
+      "cheapskate": 6.07
+    }
+  }
+}
