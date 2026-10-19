@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+# Monte Carlo raw runs (large); the summary is committed.
+reports/mc-*.json
+dist-web/
+/tmp/
