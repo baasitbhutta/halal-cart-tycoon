@@ -1,0 +1,124 @@
+{
+  "day": {
+    "openHour": 10,
+    "closeHour": 16,
+    "tickMinutes": 15
+  },
+  "rushCurve": [
+    {
+      "hour": 10,
+      "v": 0.25
+    },
+    {
+      "hour": 11,
+      "v": 0.55
+    },
+    {
+      "hour": 12,
+      "v": 1
+    },
+    {
+      "hour": 13.5,
+      "v": 1
+    },
+    {
+      "hour": 14.5,
+      "v": 0.6
+    },
+    {
+      "hour": 16,
+      "v": 0.3
+    }
+  ],
+  "weather": {
+    "conditions": [
+      {
+        "id": "hot_sunny",
+        "weight": 25,
+        "tempF": [
+          85,
+          98
+        ],
+        "demand_mult": 1.3,
+        "willingness_mult": 1.1
+      },
+      {
+        "id": "nice",
+        "weight": 35,
+        "tempF": [
+          70,
+          84
+        ],
+        "demand_mult": 1.1,
+        "willingness_mult": 1
+      },
+      {
+        "id": "cloudy",
+        "weight": 20,
+        "tempF": [
+          60,
+          75
+        ],
+        "demand_mult": 1,
+        "willingness_mult": 1
+      },
+      {
+        "id": "rainy",
+        "weight": 12,
+        "tempF": [
+          55,
+          70
+        ],
+        "demand_mult": 0.65,
+        "willingness_mult": 0.9
+      },
+      {
+        "id": "cold",
+        "weight": 8,
+        "tempF": [
+          35,
+          55
+        ],
+        "demand_mult": 0.55,
+        "willingness_mult": 0.85
+      }
+    ],
+    "forecastWrongChance": 0.28
+  },
+  "demand": {
+    "baseAppealFactor": 0.12,
+    "appealWeight": 0.5,
+    "popularityShare": 0.65,
+    "queueCap": 12
+  },
+  "pricing": {
+    "willingnessJitter": 0.3,
+    "sideItemAttachProb": 0.3
+  },
+  "service": {
+    "serveMinutes": 1.5
+  },
+  "satisfaction": {
+    "recipeWeight": 0.75,
+    "priceWeight": 0.125,
+    "servedWeight": 0.125,
+    "stockoutPenalty": 15,
+    "smoothing": 0.3
+  },
+  "popularity": {
+    "start": 10,
+    "dailyGrowth": 1.5,
+    "promoPerDollar": 0.35,
+    "lowSatisfactionThreshold": 30,
+    "lowSatisfactionDecay": 1.5
+  },
+  "promo": {
+    "responseScale": 0.35,
+    "responseSteepness": 3
+  },
+  "recipe": {
+    "sliderBase": 1,
+    "sliderStep": 0.2
+  },
+  "startingCash": 200
+}
