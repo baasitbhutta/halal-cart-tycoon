@@ -1,0 +1,429 @@
+{
+  "cartTiers": [
+    {
+      "cost": 0,
+      "id": "street",
+      "name": "Street Cart",
+      "storageMult": 1
+    },
+    {
+      "cost": 500,
+      "id": "pro",
+      "name": "Pro Cart",
+      "storageMult": 1.5
+    },
+    {
+      "cost": 1200,
+      "id": "double",
+      "name": "Double-Wide",
+      "storageMult": 2
+    }
+  ],
+  "crew": [
+    {
+      "blurb": "An extra pair of hands when the rush hits.",
+      "id": "expeditor",
+      "name": "The Expeditor",
+      "serveMult": 0.75,
+      "wage": 70
+    },
+    {
+      "blurb": "Works the line so nobody bails.",
+      "id": "hype_man",
+      "name": "The Hype Man",
+      "patienceAddMin": 3,
+      "wage": 90
+    }
+  ],
+  "customerTypes": [
+    {
+      "blurb": "Price-insensitive at lunch, hates waiting.",
+      "id": "office",
+      "name": "Office worker",
+      "patienceMin": 4,
+      "recipeIdeal": {
+        "hot_sauce": 2,
+        "meat": 4,
+        "rice": 3,
+        "white_sauce": 4
+      },
+      "recipeTolerance": 1.2,
+      "refPrice": 10
+    },
+    {
+      "blurb": "Will pay more, wants it mild, will wait.",
+      "id": "tourist",
+      "name": "Tourist",
+      "patienceMin": 8,
+      "recipeIdeal": {
+        "hot_sauce": 1,
+        "meat": 3,
+        "rice": 3,
+        "white_sauce": 3
+      },
+      "recipeTolerance": 1.5,
+      "refPrice": 11.5
+    },
+    {
+      "blurb": "Broke, loves heat, doesn't mind a line.",
+      "id": "student",
+      "name": "Student",
+      "patienceMin": 6,
+      "recipeIdeal": {
+        "hot_sauce": 4,
+        "meat": 3,
+        "rice": 4,
+        "white_sauce": 3
+      },
+      "recipeTolerance": 1.2,
+      "refPrice": 8
+    }
+  ],
+  "headlines": [
+    {
+      "effects": {
+        "demandMult": 1.2,
+        "tempOverrideF": 95
+      },
+      "id": "heat_wave",
+      "text": "Heat Wave Warning: 95\u00b0F by Noon"
+    },
+    {
+      "effects": {
+        "demandMult": 1.18
+      },
+      "id": "subway_meltdown",
+      "text": "Subway Meltdown Strands Midtown Commuters"
+    },
+    {
+      "effects": {
+        "demandMult": 1.23,
+        "popularityAdd": 3
+      },
+      "id": "tiktok_hype",
+      "text": "TikTok Foodie Declares Your Cart 'Elite'"
+    },
+    {
+      "effects": {
+        "payMult": 0.75
+      },
+      "id": "tiktok_slam",
+      "text": "Viral Critic Calls Halal Carts 'Overrated'"
+    },
+    {
+      "effects": {
+        "payMult": 1.25
+      },
+      "id": "tax_refund",
+      "text": "Tax Refunds Hit Bank Accounts Citywide"
+    },
+    {
+      "effects": {
+        "patienceAddMin": 3
+      },
+      "id": "stress_study",
+      "text": "Doctors Say Waiting in Line Reduces Stress"
+    },
+    {
+      "effects": {
+        "demandMult": 0.75,
+        "tempOverrideF": 58
+      },
+      "id": "rain_misery",
+      "text": "April Showers Drench the City"
+    }
+  ],
+  "id": "halal-cart",
+  "locations": [
+    {
+      "customerMix": {
+        "office": 0.55,
+        "student": 0.2,
+        "tourist": 0.25
+      },
+      "footTrafficPerHour": 5,
+      "id": "midtown_side",
+      "name": "Midtown Side Street",
+      "popularityBonus": 5,
+      "rent": 0
+    },
+    {
+      "id": "central_park",
+      "name": "Central Park South",
+      "rent": 15,
+      "footTrafficPerHour": 4,
+      "popularityBonus": 3,
+      "customerMix": {
+        "office": 0.15,
+        "student": 0.25,
+        "tourist": 0.6
+      }
+    },
+    {
+      "id": "fidi",
+      "name": "Financial District",
+      "rent": 40,
+      "footTrafficPerHour": 9,
+      "popularityBonus": 0,
+      "customerMix": {
+        "office": 0.8,
+        "student": 0.05,
+        "tourist": 0.15
+      }
+    },
+    {
+      "id": "times_square",
+      "name": "Times Square",
+      "rent": 60,
+      "footTrafficPerHour": 12,
+      "popularityBonus": 0,
+      "customerMix": {
+        "office": 0.2,
+        "student": 0.2,
+        "tourist": 0.6
+      }
+    }
+  ],
+  "name": "Halal Cart Tycoon",
+  "products": [
+    {
+      "components": [
+        {
+          "qty": 0.5,
+          "scaledBy": "meat",
+          "supplyId": "chicken_lb"
+        },
+        {
+          "qty": 0.35,
+          "scaledBy": "rice",
+          "supplyId": "rice_lb"
+        },
+        {
+          "qty": 1,
+          "supplyId": "pita_each"
+        },
+        {
+          "qty": 2,
+          "scaledBy": "white_sauce",
+          "supplyId": "white_sauce_oz"
+        },
+        {
+          "qty": 0.5,
+          "scaledBy": "hot_sauce",
+          "supplyId": "hot_sauce_oz"
+        },
+        {
+          "qty": 1,
+          "supplyId": "container_each"
+        }
+      ],
+      "defaultPrice": 9.5,
+      "flagship": true,
+      "id": "chicken_platter",
+      "name": "Chicken Over Rice"
+    },
+    {
+      "components": [
+        {
+          "qty": 1,
+          "supplyId": "drink_each"
+        }
+      ],
+      "defaultPrice": 2.0,
+      "flagship": false,
+      "id": "drink",
+      "name": "Cold Drink",
+      "sideItem": true
+    }
+  ],
+  "recipeAxes": [
+    {
+      "blurb": "Too little = dry, too much = soggy.",
+      "default": 3,
+      "id": "white_sauce",
+      "max": 5,
+      "min": 1,
+      "name": "White sauce"
+    },
+    {
+      "blurb": "The heat axis. Know your crowd.",
+      "default": 2,
+      "id": "hot_sauce",
+      "max": 5,
+      "min": 1,
+      "name": "Hot sauce"
+    },
+    {
+      "blurb": "Generous = happy, but pricey.",
+      "default": 3,
+      "id": "meat",
+      "max": 5,
+      "min": 1,
+      "name": "Meat portion"
+    },
+    {
+      "blurb": "Stretches the tray. Too much = filler.",
+      "default": 3,
+      "id": "rice",
+      "max": 5,
+      "min": 1,
+      "name": "Rice portion"
+    }
+  ],
+  "supplies": [
+    {
+      "bundles": [
+        {
+          "qty": 2.5,
+          "price": 8.0
+        },
+        {
+          "price": 24,
+          "qty": 10
+        },
+        {
+          "price": 42,
+          "qty": 20
+        }
+      ],
+      "id": "chicken_lb",
+      "name": "Chicken",
+      "shelfLifeDays": 1,
+      "storageCap": 20,
+      "unit": "lb"
+    },
+    {
+      "bundles": [
+        {
+          "qty": 5,
+          "price": 4.5
+        },
+        {
+          "price": 16,
+          "qty": 25
+        }
+      ],
+      "id": "rice_lb",
+      "name": "Rice",
+      "shelfLifeDays": 2,
+      "storageCap": 25,
+      "unit": "lb"
+    },
+    {
+      "bundles": [
+        {
+          "price": 5,
+          "qty": 24
+        },
+        {
+          "price": 12,
+          "qty": 72
+        }
+      ],
+      "id": "pita_each",
+      "name": "Pita",
+      "shelfLifeDays": 3,
+      "storageCap": 144,
+      "unit": "each"
+    },
+    {
+      "bundles": [
+        {
+          "qty": 96,
+          "price": 9.5
+        },
+        {
+          "price": 22,
+          "qty": 256
+        }
+      ],
+      "id": "white_sauce_oz",
+      "name": "White sauce",
+      "shelfLifeDays": 7,
+      "storageCap": 512,
+      "unit": "oz"
+    },
+    {
+      "bundles": [
+        {
+          "qty": 64,
+          "price": 6.0
+        },
+        {
+          "price": 18,
+          "qty": 256
+        }
+      ],
+      "id": "hot_sauce_oz",
+      "name": "Hot sauce",
+      "shelfLifeDays": 14,
+      "storageCap": 512,
+      "unit": "oz"
+    },
+    {
+      "bundles": [
+        {
+          "price": 9,
+          "qty": 24
+        },
+        {
+          "price": 22,
+          "qty": 72
+        }
+      ],
+      "id": "drink_each",
+      "name": "Cold drinks",
+      "shelfLifeDays": 36500,
+      "storageCap": 144,
+      "unit": "each"
+    },
+    {
+      "bundles": [
+        {
+          "price": 8,
+          "qty": 100
+        },
+        {
+          "price": 30,
+          "qty": 500
+        }
+      ],
+      "id": "container_each",
+      "name": "Containers",
+      "shelfLifeDays": 36500,
+      "storageCap": 1000,
+      "unit": "each"
+    }
+  ],
+  "tagline": "Cozy capitalist street food, one platter at a time.",
+  "upgrades": [
+    {
+      "blurb": "Keep the line cool and patient.",
+      "cost": 150,
+      "id": "awning",
+      "name": "Shade Awning",
+      "patienceAddMin": 2
+    },
+    {
+      "blurb": "Ring people up fast.",
+      "cost": 275,
+      "id": "pos_register",
+      "name": "POS Register",
+      "serveMult": 0.8
+    },
+    {
+      "blurb": "Visible from a block away.",
+      "cost": 900,
+      "id": "led_sign",
+      "name": "LED HALAL Sign",
+      "popularityBoost": 8
+    },
+    {
+      "blurb": "Double the grill, double the rush survival.",
+      "cost": 1800,
+      "id": "second_grill",
+      "name": "Second Flat-Top",
+      "serveMult": 0.7
+    }
+  ]
+}
