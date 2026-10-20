@@ -1,7 +1,33 @@
-/** Main menu: new career, continue, save slots, how to play. */
+/** Main menu: new career, continue, challenges, save slots, how to play. */
 import type { Game } from "../game.js";
-import { el, money0 } from "../format.js";
+import { el, esc, money0 } from "../format.js";
 import { clearSlot, loadGame, slotSummary, type SlotId } from "../save.js";
+import { CHALLENGES } from "../../../src/sim/challenges.js";
+
+/**
+ * Two-step confirm for destructive menu actions: first tap arms the button
+ * ("⚠️ Tap again to confirm"), second tap within 3s fires. Native confirm()
+ * dialogs get suppressed in some embedded/headless browsers (dead button)
+ * and are clunky on mobile — this works everywhere.
+ */
+export function armConfirm(btn: HTMLButtonElement, armedText: string, action: () => void): void {
+  const orig = btn.textContent ?? "";
+  let armed = false;
+  let timer: number | undefined;
+  btn.addEventListener("click", () => {
+    if (!armed) {
+      armed = true;
+      btn.textContent = armedText;
+      timer = window.setTimeout(() => {
+        armed = false;
+        btn.textContent = orig;
+      }, 3000);
+      return;
+    }
+    if (timer) window.clearTimeout(timer);
+    action();
+  });
+}
 
 export function showMenu(game: Game): void {
   const root = game.root;
@@ -19,13 +45,12 @@ export function showMenu(game: Game): void {
   actions.appendChild(el("h2", "", "📋 Main menu"));
 
   const btns = el("div", "btn-row");
-  const newBtn = el("button", "btn-gold", "🆕 New career");
-  newBtn.addEventListener("click", () => {
-    if (game.state || loadGame("auto")) {
-      if (!confirm("Start a new career? Your current run stays in its save slots.")) return;
-    }
-    game.newCareer();
-  });
+  const newBtn = el("button", "btn-gold", "🆕 New career") as HTMLButtonElement;
+  if (game.state || loadGame("auto")) {
+    armConfirm(newBtn, "⚠️ Tap again to restart", () => game.newCareer());
+  } else {
+    newBtn.addEventListener("click", () => game.newCareer());
+  }
   btns.appendChild(newBtn);
 
   const auto = loadGame("auto");
@@ -36,6 +61,24 @@ export function showMenu(game: Game): void {
   }
   actions.appendChild(btns);
 
+  // challenges
+  const chal = el("div", "panel");
+  chal.appendChild(el("h2", "", "🏆 Challenges"));
+  chal.appendChild(el("div", "dim", "Time-boxed careers with a goal. Win one, flex on your group chat."));
+  for (const c of CHALLENGES) {
+    const row = el("div", "row");
+    row.innerHTML = `<div class="grow"><span class="name">${c.emoji} ${esc(c.name)} <span class="dim">— ${c.days} days</span></span><br/><span class="sub">${esc(c.blurb)}</span></div>`;
+    const b = el("button", "btn-gold btn-small", "Start") as HTMLButtonElement;
+    if (game.state || loadGame("auto")) {
+      armConfirm(b, "⚠️ Tap again", () => game.startChallenge(c));
+    } else {
+      b.addEventListener("click", () => game.startChallenge(c));
+    }
+    row.appendChild(b);
+    chal.appendChild(row);
+  }
+  root.appendChild(chal);
+
   // save slots
   actions.appendChild(el("h3", "", "💾 Save slots"));
   (["1", "2", "3"] as SlotId[]).forEach((slot) => {
@@ -45,13 +88,11 @@ export function showMenu(game: Game): void {
     if (sum) {
       const load = el("button", "btn-gold btn-small", "Load");
       load.addEventListener("click", () => game.loadFrom(slot));
-      const del = el("button", "btn-gold btn-small", "🗑");
+      const del = el("button", "btn-gold btn-small", "🗑") as HTMLButtonElement;
       del.title = "Delete slot";
-      del.addEventListener("click", () => {
-        if (confirm(`Delete slot ${slot}?`)) {
-          clearSlot(slot);
-          game.goto("menu");
-        }
+      armConfirm(del, "⚠️", () => {
+        clearSlot(slot);
+        game.goto("menu");
       });
       row.append(load, del);
     } else {

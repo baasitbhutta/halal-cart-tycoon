@@ -127,16 +127,36 @@ export function showDay(game: Game, plan: DayPlan, result: DayResult, jumpToHour
 
   const scaleX = () => canvas.clientWidth / ISO_W;
 
+  // live bubble anchors — new bubbles get nudged sideways if they'd land
+  // right on top of a recent one
+  const activeBubbles: { x: number; t: number }[] = [];
+
   function spawnBubbleAt(lx: number, ly: number, cause: ComplaintCause): void {
     const k = scaleX();
-    // price complaints name the actual price on the menu
-    const flagship = game.theme.products.find((p) => !p.sideItem) ?? game.theme.products[0];
-    const priceLabel = money(plan.prices[flagship.id] ?? flagship.defaultPrice).replace(".00", "");
+    // price complaints name a price from THIS menu (the refused item isn't
+    // in the tick summary, so: exact price if all mains share one, else a
+    // generic swing at the menu's prices)
+    const mains = game.theme.products.filter((p) => p.flagship);
+    const prices = mains.map((p) => plan.prices[p.id] ?? p.defaultPrice);
+    const priceLabel =
+      prices.every((v) => v === prices[0])
+        ? money(prices[0]).replace(".00", "")
+        : "These prices";
     const templates = (COMPLAINT_TEMPLATES[cause] ?? ["Hmm!"]).map((s) =>
       s.replace("__PRICE__", priceLabel),
     );
     const b = el("div", "bubble", esc(pick(templates, vrng)));
-    b.style.left = `${lx * k}px`;
+    const now = performance.now();
+    for (let i = activeBubbles.length - 1; i >= 0; i--) {
+      if (now - activeBubbles[i].t > 2700) activeBubbles.splice(i, 1);
+    }
+    let bx = lx * k;
+    for (const a of activeBubbles) {
+      if (Math.abs(a.x - bx) < 110) bx += bx < a.x ? -70 : 70;
+    }
+    bx = Math.max(4, Math.min(bx, canvas.clientWidth - 150));
+    activeBubbles.push({ x: bx, t: now });
+    b.style.left = `${bx}px`;
     b.style.top = `${ly * k}px`;
     b.addEventListener("click", () => {
       hintBar.textContent = HINTS[cause] ?? "";

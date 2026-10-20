@@ -5,8 +5,9 @@
  * inputs, same outputs. All randomness from mulberry32(seed).
  */
 import { mulberry32, pickWeighted, poissonish } from "../rng.js";
-import type { Headline, Theme } from "../theme.js";
-import { flagship, getLocation, getSupply } from "../theme.js";
+import { evalChallenge } from "./challenges.js";
+import type { Headline, Product, Theme } from "../theme.js";
+import { flagships, getLocation, getSupply } from "../theme.js";
 import type { Tuning } from "../tuning.js";
 import type {
   DayPlan,
@@ -140,7 +141,8 @@ export function simulateDay(
   };
 
   const location = getLocation(theme, plan.locationId);
-  const ship = flagship(theme);
+  const mains = flagships(theme);
+  const mainsById: Record<string, Product> = Object.fromEntries(mains.map((p) => [p.id, p]));
   const sideItems = theme.products.filter((p) => p.sideItem);
 
   // ---- morning: purchases, upgrades, crew ----
@@ -263,7 +265,6 @@ export function simulateDay(
 
   const mix = location.customerMix;
   const tickMin = tuning.day.tickMinutes;
-  const flagshipNeeds = (recipe: Record<string, number>) => componentQtys(tuning, ship, recipe);
   const ticks: TickSummary[] = [];
 
   for (let h = tuning.day.openHour; h < tuning.day.closeHour; h += tickMin / 60) {
@@ -296,16 +297,22 @@ export function simulateDay(
       const c = queue.shift()!;
       servedThisTick++;
       const type = refs.customerType(c.typeId);
+      // customer picks a main from the menu, weighted by type preference
+      const pw: Record<string, number> = {};
+      for (const m of mains) pw[m.id] = m.typePref?.[type.id] ?? 1;
+      const prod = mainsById[pickWeighted(rng, pw)];
       const jitter = 1 - tuning.pricing.willingnessJitter / 2 + tuning.pricing.willingnessJitter * rng();
       const willingness =
-        baseWillingness(type, weatherCond.willingness_mult, headline?.effects.payMult ?? 1) * jitter;
-      const price = plan.prices[ship.id] ?? ship.defaultPrice;
+        baseWillingness(type, weatherCond.willingness_mult, headline?.effects.payMult ?? 1) *
+        (prod.refPriceMult ?? 1) *
+        jitter;
+      const price = plan.prices[prod.id] ?? prod.defaultPrice;
 
       if (price > willingness) {
         missedPrice++;
         continue;
       }
-      const needs = flagshipNeeds(plan.recipe);
+      const needs = componentQtys(tuning, prod, plan.recipe);
       const res = consume(inventory, needs);
       if (!res.ok) {
         stockouts++;
@@ -315,10 +322,11 @@ export function simulateDay(
       // sold!
       served++;
       revenue += price;
-      itemsSold[ship.id] = (itemsSold[ship.id] ?? 0) + 1;
+      itemsSold[prod.id] = (itemsSold[prod.id] ?? 0) + 1;
       stockUsed += res.taken.reduce((s, t) => s + t.cost, 0);
       recipeScores.push(recipeScore(plan.recipe, type));
-      priceFairness.push(clamp(1 - Math.max(0, price - type.refPrice) / type.refPrice, 0, 1));
+      const typeRef = type.refPrice * (prod.refPriceMult ?? 1);
+      priceFairness.push(clamp(1 - Math.max(0, price - typeRef) / typeRef, 0, 1));
 
       // side items (drinks)
       for (const side of sideItems) {
@@ -433,7 +441,7 @@ export function simulateDay(
 
 /** Fold a DayResult back into GameState (pre-overnight). */
 export function applyDayResult(state: GameState, plan: DayPlan, result: DayResult): GameState {
-  return {
+  const next: GameState = {
     ...state,
     locationId: result.locationId,
     cash: result.cashAfter,
@@ -442,6 +450,8 @@ export function applyDayResult(state: GameState, plan: DayPlan, result: DayResul
     inventory: result.inventoryAfter,
     upgrades: result.upgradesAfter,
     crew: plan.crew,
+    lifetimeEarnings: (state.lifetimeEarnings ?? 0) + result.ledger.earnings,
+    lifetimeServed: (state.lifetimeServed ?? 0) + result.served,
     history: [
       ...state.history,
       {
@@ -454,6 +464,10 @@ export function applyDayResult(state: GameState, plan: DayPlan, result: DayResul
       },
     ],
   };
+  if (next.challengeId && next.challengeStatus === "active") {
+    next.challengeStatus = evalChallenge(next);
+  }
+  return next;
 }
 
 /**
@@ -502,6 +516,8 @@ export function newGame(theme: Theme, tuning: Tuning, locationId?: string): Game
     crew: [],
     cartTier: 0,
     history: [],
+    lifetimeEarnings: 0,
+    lifetimeServed: 0,
   };
 }
 

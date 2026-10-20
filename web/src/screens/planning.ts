@@ -5,6 +5,7 @@
 import type { Game } from "../game.js";
 import type { DayPlan, Purchase } from "../../../src/sim/types.js";
 import { componentQtys, stockOnHand } from "../../../src/sim/economy.js";
+import { challengeById, goalProgress, goalText, nextRank, rankFor } from "../../../src/sim/challenges.js";
 import { el, esc, money, condIcon, condLabel } from "../format.js";
 import { saveGame, type SlotId } from "../save.js";
 
@@ -13,10 +14,20 @@ function fmtQty(q: number): string {
   return String(Math.round(q * 100) / 100);
 }
 
-/** Per-platter ingredient quantities at the plan's current recipe. */
-function flagshipNeeds(game: Game, plan: DayPlan): Map<string, number> {
-  const ship = game.theme.products.find((p) => !p.sideItem) ?? game.theme.products[0];
-  return new Map(componentQtys(game.tuning, ship, plan.recipe).map((c) => [c.supplyId, c.qty]));
+/** Per-item ingredient quantities at the plan's current recipe. */
+function itemNeeds(game: Game, plan: DayPlan, productId: string): Map<string, number> {
+  const prod = game.theme.products.find((p) => p.id === productId)!;
+  return new Map(componentQtys(game.tuning, prod, plan.recipe).map((c) => [c.supplyId, c.qty]));
+}
+
+/** Short unit name for a product: "platter" / "gyro" / "drink" etc. */
+function unitName(game: Game, productId: string): string {
+  const p = game.theme.products.find((x) => x.id === productId)!;
+  const low = p.name.toLowerCase();
+  if (p.sideItem) return "drink";
+  if (low.includes("gyro")) return "gyro";
+  if (low.includes("falafel")) return "falafel";
+  return "platter";
 }
 
 type TabId = "supplies" | "recipe" | "menu" | "crew" | "upgrades" | "spot";
@@ -40,6 +51,22 @@ export function showPlanning(game: Game): void {
   const hud = game.mountHudTitle(`day ${state.day}`);
   const cashEl = el("span", "cash", money(state.cash));
   hud.appendChild(cashEl);
+  const rank = rankFor(state.lifetimeEarnings ?? 0);
+  const next = nextRank(state.lifetimeEarnings ?? 0);
+  hud.appendChild(
+    el("span", "dim", ` · ${rank.emoji} ${esc(rank.name)}${next ? ` · next rank at ${money(next.at)} lifetime` : " · top rank!"}`),
+  );
+
+  // ---- challenge banner ----
+  const chalDef = challengeById(state.challengeId);
+  if (chalDef && state.challengeStatus === "active") {
+    const daysLeft = chalDef.days - (state.day - 1);
+    const pct = Math.round(goalProgress(chalDef, state) * 100);
+    const banner = el("div", "panel center");
+    banner.innerHTML = `<div class="name">${chalDef.emoji} ${esc(chalDef.name)} — ${esc(goalText(chalDef))}</div>
+      <div class="sub">Progress ${pct}% · ${daysLeft} day${daysLeft === 1 ? "" : "s"} left</div>`;
+    root.appendChild(banner);
+  }
 
   const title = el("div", "panel center");
   title.innerHTML = `<h2>🌅 Morning planning — Day ${state.day}</h2>
@@ -76,9 +103,15 @@ export function showPlanning(game: Game): void {
     const pc = purchaseCost();
     const uc = upgradeCost();
     const total = pc + uc + plan.promoSpend;
+    const loc = theme.locations.find((l) => l.id === state.locationId)!;
+    const afterShopping = state.cash - Math.min(total, state.cash);
+    // honest cash walk: purchases+upgrades+promo go out in the morning, rent
+    // goes out with the day — don't show a "cash after" that pretends rent
+    // doesn't exist (the evening ledger's earnings are P&L, not cash flow).
     spendEl.innerHTML =
       `🛒 ${money(pc)} &nbsp; 🔧 ${money(uc)} &nbsp; 📣 ${money(plan.promoSpend)}<br/>` +
-      `<b>Morning spend: ${money(total)}</b> &nbsp; <span class="dim">cash after: ${money(state.cash - Math.min(total, state.cash))}</span>`;
+      `<b>Morning spend: ${money(total)}</b> · <span class="dim">cash after shopping: ${money(afterShopping)}</span><br/>` +
+      `<span class="dim">${money(loc.rent)} rent goes out with the day → projected end-of-day ${money(afterShopping - loc.rent)}</span>`;
   };
 
   const renderTab = () => {
@@ -156,31 +189,36 @@ function renderSupplies(game: Game, plan: DayPlan, body: HTMLElement, refresh: (
   const theme = game.theme;
   const state = game.state!;
   const mult = storageMultOf(game);
-  body.appendChild(el("div", "dim", "Chicken spoils overnight — buy fresh daily. Rice keeps 2 days, sauces keep for weeks."));
+  body.appendChild(el("div", "dim", "Chicken and lamb spoil overnight — buy fresh daily. Rice keeps 2 days, sauces keep for weeks."));
 
-  // platter capacity summary: the bottleneck ingredient caps the day
+  // servings summary: each main's count is set by ITS bottleneck ingredient
   const capEl = el("div", "panel-inset");
   const renderCap = () => {
-    const needs = flagshipNeeds(game, plan);
-    let best = Infinity;
-    let bottleneck = "";
-    for (const s of theme.supplies) {
-      const per = needs.get(s.id);
-      if (per == null || per <= 0) continue;
-      const planned = plan.purchases
-        .filter((p) => p.supplyId === s.id)
-        .reduce((sum, p) => sum + p.count * s.bundles[p.bundleIndex].qty, 0);
-      const total = stockOnHand(state.inventory[s.id]) + planned;
-      const n = Math.floor(total / per);
-      if (n < best) {
-        best = n;
-        bottleneck = s.name.toLowerCase();
+    const mains = theme.products.filter((p) => p.flagship);
+    const parts: string[] = [];
+    for (const prod of mains) {
+      const needs = itemNeeds(game, plan, prod.id);
+      let best = Infinity;
+      let bottleneck = "";
+      for (const s of theme.supplies) {
+        const per = needs.get(s.id);
+        if (per == null || per <= 0) continue;
+        const planned = plan.purchases
+          .filter((p) => p.supplyId === s.id)
+          .reduce((sum, p) => sum + p.count * s.bundles[p.bundleIndex].qty, 0);
+        const total = stockOnHand(state.inventory[s.id]) + planned;
+        const n = Math.floor(total / per);
+        if (n < best) {
+          best = n;
+          bottleneck = s.name.toLowerCase();
+        }
       }
+      parts.push(
+        `${best === Infinity ? 0 : best} ${esc(prod.name.toLowerCase())}` +
+          (bottleneck ? ` <span class="dim">(limited by ${esc(bottleneck)})</span>` : ""),
+      );
     }
-    capEl.innerHTML =
-      `<div class="name">🥘 Platters you can make: <span style="color:var(--gold-1)">${best === Infinity ? 0 : best}</span>` +
-      (bottleneck ? ` <span class="dim">— limited by ${esc(bottleneck)}</span>` : "") +
-      `</div>`;
+    capEl.innerHTML = `<div class="name">🥘 You can make</div><div class="sub">${parts.join("<br/>")}</div>`;
   };
   renderCap();
   body.appendChild(capEl);
@@ -203,7 +241,7 @@ function renderSupplies(game: Game, plan: DayPlan, body: HTMLElement, refresh: (
     const onHand = stockOnHand(state.inventory[s.id]);
     const cap = Math.floor(s.storageCap * mult);
     const sec = el("div", "panel-inset");
-    sec.innerHTML = `<div class="name">📦 ${esc(s.name)} <span class="dim">— on hand: ${onHand} ${s.unit} / cap ${cap} ${s.unit}</span></div>`;
+    sec.innerHTML = `<div class="name">📦 ${esc(s.name)} <span class="dim">— on hand: ${fmtQty(onHand)} ${s.unit} · storage cap ${cap} ${s.unit} (can't buy past this)</span></div>`;
     s.bundles.forEach((b, bi) => {
       const key = `${s.id}:${bi}`;
       const row = el("div", "row");
@@ -213,7 +251,7 @@ function renderSupplies(game: Game, plan: DayPlan, body: HTMLElement, refresh: (
         const comp = componentQtys(game.tuning, prod, plan.recipe).find((c) => c.supplyId === s.id);
         if (comp && comp.qty > 0) {
           const n = Math.floor(b.qty / comp.qty);
-          makes = ` · <span class="dim">≈ ${n} ${prod.sideItem ? "drinks" : "platters"}</span>`;
+          makes = ` · <span class="dim">≈ ${n} ${unitName(game, prod.id)}s</span>`;
           break;
         }
       }
@@ -241,16 +279,20 @@ function renderRecipe(game: Game, plan: DayPlan, body: HTMLElement): void {
   const theme = game.theme;
   body.appendChild(el("div", "dim", "The sauce balance <i>is</i> the recipe. Office workers love extra white sauce; students want heat; tourists like it mild."));
 
-  // live per-platter readout: what one platter actually consumes
+  // live per-item readout: what one serving of each main actually consumes
   const needsEl = el("div", "panel-inset");
   const renderNeeds = () => {
-    const needs = flagshipNeeds(game, plan);
-    const parts: string[] = [];
-    for (const s of theme.supplies) {
-      const q = needs.get(s.id);
-      if (q != null && q > 0) parts.push(`${fmtQty(q)} ${s.unit} ${esc(s.name.toLowerCase())}`);
+    const rows: string[] = [];
+    for (const prod of theme.products.filter((p) => p.flagship)) {
+      const needs = itemNeeds(game, plan, prod.id);
+      const parts: string[] = [];
+      for (const s of theme.supplies) {
+        const q = needs.get(s.id);
+        if (q != null && q > 0) parts.push(`${fmtQty(q)} ${s.unit} ${esc(s.name.toLowerCase())}`);
+      }
+      rows.push(`<div class="sub">${prod.emoji ?? "🍽️"} <b>${esc(prod.name)}</b> — ${parts.join(" · ")}</div>`);
     }
-    needsEl.innerHTML = `<div class="name">🍱 Per platter</div><div class="sub">${parts.join(" · ")}</div>`;
+    needsEl.innerHTML = `<div class="name">🍱 Per serving</div>${rows.join("")}`;
   };
   renderNeeds();
   body.appendChild(needsEl);
@@ -270,7 +312,7 @@ function renderRecipe(game: Game, plan: DayPlan, body: HTMLElement): void {
       label.querySelector(".val")!.textContent = slider.value;
       renderNeeds();
     });
-    wrap.append(label, slider, el("div", "sub dim", esc(a.blurb)));
+    wrap.append(label, slider, el("div", "sub dim", "1 = less &nbsp;·&nbsp; 3 = classic &nbsp;·&nbsp; 5 = extra"), el("div", "sub dim", esc(a.blurb)));
     body.appendChild(wrap);
   }
 }
@@ -279,26 +321,30 @@ function renderMenu(game: Game, plan: DayPlan, body: HTMLElement, refresh: () =>
   const theme = game.theme;
   for (const p of theme.products) {
     const row = el("div", "row");
-    row.innerHTML = `<div class="grow"><span class="name">${p.sideItem ? "🥤" : "🍗"} ${esc(p.name)}</span></div>`;
+    row.innerHTML = `<div class="grow"><span class="name">${esc(p.emoji ?? (p.sideItem ? "🥤" : "🍗"))} ${esc(p.name)}</span></div>`;
     const inp = document.createElement("input") as HTMLInputElement;
     inp.type = "number";
     inp.min = "0";
     inp.step = "0.5";
     inp.value = String(plan.prices[p.id] ?? p.defaultPrice);
     inp.setAttribute("aria-label", `Price for ${p.name}`);
-    const commit = () => {
+    // 'input' updates the model live (mobile: tapping OPEN CART straight
+    // from the keyboard can skip blur, so 'change' may never fire) — but it
+    // must NEVER rewrite the field mid-typing, or "10.5" becomes "105"
+    // (the decimal point gets eaten). Normalization happens on blur.
+    inp.addEventListener("input", () => {
+      const n = Number(inp.value);
+      if (inp.value.trim() !== "" && Number.isFinite(n)) plan.prices[p.id] = Math.max(0, n);
+    });
+    inp.addEventListener("change", () => {
       plan.prices[p.id] = Math.max(0, Number(inp.value) || 0);
       inp.value = String(plan.prices[p.id]);
-    };
-    // 'input' (not just 'change'): on mobile, tapping OPEN CART straight
-    // from the keyboard can skip blur, so 'change' never fires.
-    inp.addEventListener("input", commit);
-    inp.addEventListener("change", commit);
+    });
     row.appendChild(inp);
     body.appendChild(row);
   }
   const promo = el("div", "panel-inset");
-  promo.innerHTML = `<div class="name">📣 Daily promo</div><div class="dim">Flyers + social. Strongest when you're new in town; diminishing returns past ~$5.</div>`;
+  promo.innerHTML = `<div class="name">📣 Daily promo</div><div class="dim">Flyers + social. Strongest when you're new in town; diminishing returns past ~$5. Set once — it recurs every morning until you change it.</div>`;
   const row = el("div", "row");
   const st = el("div", "stepper");
   const minus = el("button", "", "−") as HTMLButtonElement;
@@ -408,5 +454,5 @@ function renderSpot(game: Game, plan: DayPlan, body: HTMLElement, rerender: () =
     card.appendChild(row);
     body.appendChild(card);
   }
-  body.appendChild(el("div", "dim center", "More NYC spots open up in M3 — Coney Island, Jackson Heights, and the fabled Herald Square."));
+  body.appendChild(el("div", "dim center", "10 spots across the city — move up the ladder as your fame (and bankroll) grow."));
 }

@@ -96,7 +96,7 @@
     "sideItemAttachProb": 0.3
   },
   "service": {
-    "serveMinutes": 1.5
+    "serveMinutes": 4.0
   },
   "satisfaction": {
     "recipeWeight": 0.75,

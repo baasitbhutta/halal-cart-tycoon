@@ -40,7 +40,7 @@
       "blurb": "Price-insensitive at lunch, hates waiting.",
       "id": "office",
       "name": "Office worker",
-      "patienceMin": 4,
+      "patienceMin": 10,
       "recipeIdeal": {
         "hot_sauce": 2,
         "meat": 4,
@@ -54,7 +54,7 @@
       "blurb": "Will pay more, wants it mild, will wait.",
       "id": "tourist",
       "name": "Tourist",
-      "patienceMin": 8,
+      "patienceMin": 16,
       "recipeIdeal": {
         "hot_sauce": 1,
         "meat": 3,
@@ -68,7 +68,7 @@
       "blurb": "Broke, loves heat, doesn't mind a line.",
       "id": "student",
       "name": "Student",
-      "patienceMin": 6,
+      "patienceMin": 12,
       "recipeIdeal": {
         "hot_sauce": 4,
         "meat": 3,
@@ -81,82 +81,814 @@
   ],
   "headlines": [
     {
+      "id": "heat_wave",
+      "text": "Heat Wave Warning: 95\u00b0F by Noon",
       "effects": {
         "demandMult": 1.2,
-        "tempOverrideF": 95
-      },
-      "id": "heat_wave",
-      "text": "Heat Wave Warning: 95\u00b0F by Noon"
+        "tempOverrideF": 95,
+        "payMult": 1.1
+      }
     },
     {
+      "id": "subway_meltdown",
+      "text": "Subway Meltdown Strands Midtown Commuters",
       "effects": {
         "demandMult": 1.18
-      },
-      "id": "subway_meltdown",
-      "text": "Subway Meltdown Strands Midtown Commuters"
+      }
     },
     {
+      "id": "tiktok_hype",
+      "text": "TikTok Foodie Declares Your Cart 'Elite'",
       "effects": {
         "demandMult": 1.23,
         "popularityAdd": 3
-      },
-      "id": "tiktok_hype",
-      "text": "TikTok Foodie Declares Your Cart 'Elite'"
+      }
     },
     {
-      "effects": {
-        "payMult": 0.75
-      },
       "id": "tiktok_slam",
-      "text": "Viral Critic Calls Halal Carts 'Overrated'"
-    },
-    {
+      "text": "Viral Critic Calls Halal Carts 'Overrated'",
       "effects": {
-        "payMult": 1.25
-      },
-      "id": "tax_refund",
-      "text": "Tax Refunds Hit Bank Accounts Citywide"
+        "payMult": 0.75,
+        "demandMult": 0.94
+      }
     },
     {
+      "id": "tax_refund",
+      "text": "Tax Refunds Hit Bank Accounts Citywide",
+      "effects": {
+        "payMult": 1.25,
+        "demandMult": 1.08
+      }
+    },
+    {
+      "id": "stress_study",
+      "text": "Doctors Say Waiting in Line Reduces Stress",
       "effects": {
         "patienceAddMin": 3
-      },
-      "id": "stress_study",
-      "text": "Doctors Say Waiting in Line Reduces Stress"
+      }
     },
     {
+      "id": "rain_misery",
+      "text": "April Showers Drench the City",
       "effects": {
         "demandMult": 0.75,
         "tempOverrideF": 58
-      },
-      "id": "rain_misery",
-      "text": "April Showers Drench the City"
+      }
+    },
+    {
+      "id": "listicle_top10",
+      "text": "Your Cart Lands on 'Top 10 Street Eats' Listicle",
+      "effects": {
+        "demandMult": 1.15,
+        "popularityAdd": 2
+      }
+    },
+    {
+      "id": "food_blog_raves",
+      "text": "Neighborhood Blog Raves About 'That White Sauce'",
+      "effects": {
+        "demandMult": 1.12
+      }
+    },
+    {
+      "id": "celeb_spotted",
+      "text": "Famous Rapper Photographed Holding Your Platter",
+      "effects": {
+        "demandMult": 1.25,
+        "popularityAdd": 4,
+        "payMult": 1.15
+      }
+    },
+    {
+      "id": "queue_goes_viral",
+      "text": "Photo of Your Lunch Line Goes Viral",
+      "effects": {
+        "demandMult": 1.2
+      }
+    },
+    {
+      "id": "critic_retracts",
+      "text": "Critic Eats Words, Then Eats Second Platter",
+      "effects": {
+        "payMult": 1.22
+      }
+    },
+    {
+      "id": "morning_show",
+      "text": "Local Morning Show Films Segment at Your Cart",
+      "effects": {
+        "demandMult": 1.18,
+        "popularityAdd": 3
+      }
+    },
+    {
+      "id": "sauce_meme",
+      "text": "White Sauce Meme Sweeps the Internet",
+      "effects": {
+        "demandMult": 1.1
+      }
+    },
+    {
+      "id": "five_star_surge",
+      "text": "Five-Star Reviews Flood In Overnight",
+      "effects": {
+        "popularityAdd": 3,
+        "demandMult": 1.18
+      }
+    },
+    {
+      "id": "food_podcast",
+      "text": "Food Podcast Devotes Episode to Cart Culture",
+      "effects": {
+        "demandMult": 1.08
+      }
+    },
+    {
+      "id": "influencer_feud",
+      "text": "Two Influencers Feud Over 'Best Cart' Crown",
+      "effects": {
+        "demandMult": 1.12
+      }
+    },
+    {
+      "id": "review_bomb_backfire",
+      "text": "Rival Cart Review-Bombs You; Fans Rally",
+      "effects": {
+        "popularityAdd": 2,
+        "demandMult": 1.05
+      }
+    },
+    {
+      "id": "sauce_ranking",
+      "text": "City Mag Ranks Your White Sauce #1",
+      "effects": {
+        "demandMult": 1.16,
+        "popularityAdd": 2
+      }
+    },
+    {
+      "id": "food_show_feature",
+      "text": "New Food Show Episode Features NYC Street Food",
+      "effects": {
+        "demandMult": 1.15,
+        "popularityAdd": 2
+      }
+    },
+    {
+      "id": "perfect_day",
+      "text": "70\u00b0 and Sunny: The City Eats Outside Today",
+      "effects": {
+        "demandMult": 1.28
+      }
+    },
+    {
+      "id": "heat_wave_two",
+      "text": "Second Heat Wave: Ice Sellers Sold Out Citywide",
+      "effects": {
+        "demandMult": 1.18,
+        "tempOverrideF": 97
+      }
+    },
+    {
+      "id": "cold_snap",
+      "text": "Arctic Blast: Only the Brave (and Hungry) Venture Out",
+      "effects": {
+        "demandMult": 0.8,
+        "tempOverrideF": 38
+      }
+    },
+    {
+      "id": "downpour",
+      "text": "Flash Flood Warning: Sidewalks Become Rivers",
+      "effects": {
+        "demandMult": 0.7,
+        "tempOverrideF": 61
+      }
+    },
+    {
+      "id": "snow_day",
+      "text": "Surprise Snow Day: Schools Closed, Streets Empty",
+      "effects": {
+        "demandMult": 0.72
+      }
+    },
+    {
+      "id": "golden_day",
+      "text": "Postcard Weather Draws Record Park Crowds",
+      "effects": {
+        "demandMult": 1.15,
+        "tempOverrideF": 74
+      }
+    },
+    {
+      "id": "humidity",
+      "text": "Humidity So Thick You Could Spread It on Pita",
+      "effects": {
+        "demandMult": 0.9,
+        "tempOverrideF": 91
+      }
+    },
+    {
+      "id": "wind_tunnel",
+      "text": "Wind Tunnel Effect Knocks Over Umbrellas Uptown",
+      "effects": {
+        "demandMult": 0.88
+      }
+    },
+    {
+      "id": "first_spring",
+      "text": "First Real Day of Spring: Everyone's Outside",
+      "effects": {
+        "demandMult": 1.2,
+        "tempOverrideF": 68
+      }
+    },
+    {
+      "id": "indian_summer",
+      "text": "Indian Summer Extends Patio Season Another Week",
+      "effects": {
+        "demandMult": 1.12,
+        "tempOverrideF": 82
+      }
+    },
+    {
+      "id": "heat_dome",
+      "text": "Heat Dome Settles Over the Tri-State Area",
+      "effects": {
+        "demandMult": 1.15,
+        "tempOverrideF": 93
+      }
+    },
+    {
+      "id": "wintry_mix",
+      "text": "Wintry Mix: The Worst of Both Weathers",
+      "effects": {
+        "demandMult": 0.78,
+        "tempOverrideF": 36
+      }
+    },
+    {
+      "id": "first_snow",
+      "text": "First Snow: City Briefly Forgets How to Function",
+      "effects": {
+        "demandMult": 0.85,
+        "tempOverrideF": 31
+      }
+    },
+    {
+      "id": "transit_strike",
+      "text": "Bus Strike Snarls Commutes; Offices Half-Empty",
+      "effects": {
+        "demandMult": 0.82
+      }
+    },
+    {
+      "id": "parade_day",
+      "text": "Parade Route Brings Thousands Past Your Corner",
+      "effects": {
+        "demandMult": 1.3,
+        "payMult": 1.1
+      }
+    },
+    {
+      "id": "marathon",
+      "text": "Marathon Sunday: Hungry Runners, Hungrier Spectators",
+      "effects": {
+        "demandMult": 1.15
+      }
+    },
+    {
+      "id": "un_week",
+      "text": "UN General Assembly: Delegates Crave Street Food",
+      "effects": {
+        "demandMult": 1.2,
+        "payMult": 1.18
+      }
+    },
+    {
+      "id": "fashion_week",
+      "text": "Fashion Week: Models Secretly Eating Platters",
+      "effects": {
+        "demandMult": 1.1
+      }
+    },
+    {
+      "id": "comic_con",
+      "text": "Comic Con: Caped Crusaders Need Carbs",
+      "effects": {
+        "demandMult": 1.14
+      }
+    },
+    {
+      "id": "office_return",
+      "text": "Bosses Order Everyone Back to the Office",
+      "effects": {
+        "demandMult": 1.18
+      }
+    },
+    {
+      "id": "wfh_friday",
+      "text": "Work-From-Home Friday Empties Midtown",
+      "effects": {
+        "demandMult": 0.85
+      }
+    },
+    {
+      "id": "construction",
+      "text": "Scaffolding Goes Up Across the Street",
+      "effects": {
+        "demandMult": 0.82
+      }
+    },
+    {
+      "id": "film_shoot",
+      "text": "Movie Shoot Closes Street \u2014 Crew Eats Local",
+      "effects": {
+        "demandMult": 1.1
+      }
+    },
+    {
+      "id": "street_fair_elsewhere",
+      "text": "Street Fair Two Blocks Over Siphons the Lunch Crowd",
+      "effects": {
+        "demandMult": 0.88
+      }
+    },
+    {
+      "id": "farmers_market",
+      "text": "New Farmers Market Draws the Lunch Crowd Away",
+      "effects": {
+        "demandMult": 0.9
+      }
+    },
+    {
+      "id": "tech_conference",
+      "text": "Tech Conference Serves Free Lunch (Traitors)",
+      "effects": {
+        "demandMult": 0.85
+      }
+    },
+    {
+      "id": "free_pizza_office",
+      "text": "Office Orders 200 Pizzas; Lunch Crowd Vanishes",
+      "effects": {
+        "demandMult": 0.82
+      }
+    },
+    {
+      "id": "gridlock",
+      "text": "Gridlock Alert: Nobody's Going Anywhere for Lunch",
+      "effects": {
+        "demandMult": 0.88
+      }
+    },
+    {
+      "id": "blackout",
+      "text": "Brief Blackout: Office Fridges Die, Everyone Eats Out",
+      "effects": {
+        "demandMult": 1.2,
+        "payMult": 1.12
+      }
+    },
+    {
+      "id": "water_main",
+      "text": "Water Main Break Floods the Other Guys' Block",
+      "effects": {
+        "demandMult": 1.1
+      }
+    },
+    {
+      "id": "election_day",
+      "text": "Election Day: Poll Workers Run on Street Food",
+      "effects": {
+        "demandMult": 1.1
+      }
+    },
+    {
+      "id": "graduation",
+      "text": "Graduation Season: Families Celebrate with Platters",
+      "effects": {
+        "demandMult": 1.12,
+        "payMult": 1.12
+      }
+    },
+    {
+      "id": "payday_friday",
+      "text": "Payday Friday: Wallets Feel Heavy",
+      "effects": {
+        "payMult": 1.25,
+        "demandMult": 1.15
+      }
+    },
+    {
+      "id": "wall_st_bonus",
+      "text": "Wall Street Bonuses Land; Suits Splurge",
+      "effects": {
+        "payMult": 1.28,
+        "demandMult": 1.12
+      }
+    },
+    {
+      "id": "rent_day",
+      "text": "Rent Day: City Collectively Counts Pennies",
+      "effects": {
+        "payMult": 0.72,
+        "demandMult": 0.9
+      }
+    },
+    {
+      "id": "layoffs",
+      "text": "Tech Layoffs Announced; Lunch Budgets Shrink",
+      "effects": {
+        "payMult": 0.75,
+        "demandMult": 0.88
+      }
+    },
+    {
+      "id": "crypto_crash",
+      "text": "Crypto Crashes; Bros Eat Sad Desk Salads",
+      "effects": {
+        "payMult": 0.72,
+        "demandMult": 0.9
+      }
+    },
+    {
+      "id": "crypto_moon",
+      "text": "Crypto Moons; Bros Buy Rounds for the Line",
+      "effects": {
+        "payMult": 1.3,
+        "demandMult": 1.1
+      }
+    },
+    {
+      "id": "lottery_fever",
+      "text": "Mega Jackpot Fever: Everyone Feels Lucky (and Generous)",
+      "effects": {
+        "payMult": 1.25
+      }
+    },
+    {
+      "id": "tourists_flush",
+      "text": "Exchange Rate Sends Tourists on a Spending Spree",
+      "effects": {
+        "payMult": 1.3
+      }
+    },
+    {
+      "id": "grocery_prices",
+      "text": "Grocery Prices Up Again; Eating Out Feels Smarter",
+      "effects": {
+        "demandMult": 1.08
+      }
+    },
+    {
+      "id": "protein_craze",
+      "text": "High-Protein Craze Peaks: Chicken Is King",
+      "effects": {
+        "demandMult": 1.18
+      }
+    },
+    {
+      "id": "sauce_superfood",
+      "text": "'White Sauce Is a Superfood,' Claims Man, Probably",
+      "effects": {
+        "demandMult": 1.1
+      }
+    },
+    {
+      "id": "slow_food",
+      "text": "Slow Food Movement: Savor the Wait",
+      "effects": {
+        "patienceAddMin": 3
+      }
+    },
+    {
+      "id": "meditation_app",
+      "text": "Meditation App Update Makes Everyone Patient",
+      "effects": {
+        "patienceAddMin": 2
+      }
+    },
+    {
+      "id": "zen_line",
+      "text": "Study: People in Lines Report 'Weirdly Zen' Feeling",
+      "effects": {
+        "patienceAddMin": 3
+      }
+    },
+    {
+      "id": "spicy_challenge",
+      "text": "Extreme Spice Challenge Trends Online",
+      "effects": {
+        "demandMult": 1.12
+      }
+    },
+    {
+      "id": "gym_cheat_day",
+      "text": "New Year Gym Crowd Discovers 'Cheat Day'",
+      "effects": {
+        "demandMult": 1.08
+      }
+    },
+    {
+      "id": "salad_scare",
+      "text": "Food Scare at a Salad Chain Uptown; City Switches to Rice",
+      "effects": {
+        "demandMult": 1.15
+      }
+    },
+    {
+      "id": "salad_chain_closed",
+      "text": "Salad Chain Closes 40 Stores; Refugees Seek Rice",
+      "effects": {
+        "demandMult": 1.12
+      }
+    },
+    {
+      "id": "kale_backlash",
+      "text": "Kale Backlash Enters Third Year",
+      "effects": {
+        "demandMult": 1.05
+      }
+    },
+    {
+      "id": "book_club",
+      "text": "Citywide Book Club Picks 900-Page Novel; Parks Fill with Readers",
+      "effects": {
+        "patienceAddMin": 2
+      }
+    },
+    {
+      "id": "yoga_retreat",
+      "text": "Corporate Yoga Retreat: Meetings Cancelled, Moods Great",
+      "effects": {
+        "patienceAddMin": 3,
+        "demandMult": 0.95
+      }
+    },
+    {
+      "id": "rival_cart",
+      "text": "Flashy New Rival Cart Parks Across the Street",
+      "effects": {
+        "demandMult": 0.85
+      }
+    },
+    {
+      "id": "rival_closed",
+      "text": "Rival Cart Closed for 'Permit Issues' \ud83d\udc40",
+      "effects": {
+        "demandMult": 1.15
+      }
+    },
+    {
+      "id": "food_hall",
+      "text": "New Food Hall Opens \u2014 With $19 Salads",
+      "effects": {
+        "demandMult": 1.1
+      }
+    },
+    {
+      "id": "hot_dog_feud",
+      "text": "Hot Dog Cart Feud Enters Day 12; Crowds Watch Free",
+      "effects": {
+        "demandMult": 1.08
+      }
+    },
+    {
+      "id": "copycat_cart",
+      "text": "Copycat Cart Steals Your Color Scheme",
+      "effects": {
+        "demandMult": 0.92
+      }
+    },
+    {
+      "id": "dollar_pizza",
+      "text": "Dollar Pizza Raises Price to $1.50; City Mourns, Moves On",
+      "effects": {
+        "demandMult": 1.12
+      }
+    },
+    {
+      "id": "permit_day",
+      "text": "Permit Renewal Day: Half the Carts in the City Closed",
+      "effects": {
+        "demandMult": 1.18
+      }
+    },
+    {
+      "id": "app_crash",
+      "text": "Food Delivery Apps Crash at Noon. Sidewalks Win.",
+      "effects": {
+        "demandMult": 1.22
+      }
+    },
+    {
+      "id": "bee_swarm",
+      "text": "Bee Swarm Relocates to Tree Near Rival Cart",
+      "effects": {
+        "demandMult": 1.12
+      }
+    },
+    {
+      "id": "ramadan_iftar",
+      "text": "Ramadan: Iftar Rush Expected at Sunset",
+      "effects": {
+        "demandMult": 1.15
+      }
+    },
+    {
+      "id": "eid_festival",
+      "text": "Eid Festival Fills the Park with Families",
+      "effects": {
+        "demandMult": 1.2,
+        "payMult": 1.1
+      }
+    },
+    {
+      "id": "halal_guide",
+      "text": "City Publishes Halal Certification Guide; Carts Boom",
+      "effects": {
+        "demandMult": 1.12,
+        "popularityAdd": 2
+      }
+    },
+    {
+      "id": "interfaith_fair",
+      "text": "Interfaith Food Fair Celebrates Street Vendors",
+      "effects": {
+        "demandMult": 1.1
+      }
+    },
+    {
+      "id": "friday_prayers",
+      "text": "Friday Prayers Let Out Early; Hungry Congregation",
+      "effects": {
+        "demandMult": 1.12
+      }
+    },
+    {
+      "id": "inspection_a",
+      "text": "Health Inspector Gives Your Cart an A \u2014 You Post It Proudly",
+      "effects": {
+        "popularityAdd": 3,
+        "demandMult": 1.1
+      }
+    },
+    {
+      "id": "pigeon_union",
+      "text": "Pigeons Unionize; Demand Crumbs, Better Scraps",
+      "effects": {
+        "demandMult": 1.02
+      }
+    },
+    {
+      "id": "pizza_rat_jr",
+      "text": "Beloved Subway Rat 'Pizza Rat Jr.' Spotted Uptown",
+      "effects": {
+        "demandMult": 1.03
+      }
+    },
+    {
+      "id": "chess_hustlers",
+      "text": "Chess Hustlers Declare Your Corner 'Lucky'",
+      "effects": {
+        "demandMult": 1.05
+      }
+    },
+    {
+      "id": "busker_viral",
+      "text": "Saxophonist Outside Your Cart Goes Viral",
+      "effects": {
+        "demandMult": 1.1
+      }
+    },
+    {
+      "id": "lost_tourist",
+      "text": "Tour Group of 40 Follows Your Umbrella, Mistakes It for a Flag",
+      "effects": {
+        "demandMult": 1.15
+      }
+    },
+    {
+      "id": "dog_parade",
+      "text": "Dog Costume Parade Halts Traffic, Delights All",
+      "effects": {
+        "demandMult": 1.08
+      }
+    },
+    {
+      "id": "subway_series",
+      "text": "Subway Series Tonight: Half the City Calls Out 'Sick'",
+      "effects": {
+        "demandMult": 1.1
+      }
+    },
+    {
+      "id": "tour_bus",
+      "text": "Double-Decker Tour Buses Discover Your Block",
+      "effects": {
+        "demandMult": 1.12
+      }
+    },
+    {
+      "id": "office_party",
+      "text": "Office Party Season: Assistants Order Platters by the Dozen",
+      "effects": {
+        "demandMult": 1.15
+      }
+    },
+    {
+      "id": "rain_check",
+      "text": "Rain Check: City Makes Up for Yesterday's Lost Lunches",
+      "effects": {
+        "demandMult": 1.1
+      }
+    },
+    {
+      "id": "sample_rival",
+      "text": "Free-Sample Rival Shuts Down; Your Line Absorbs the Crowd",
+      "effects": {
+        "demandMult": 1.08
+      }
+    },
+    {
+      "id": "nothing_happened",
+      "text": "Nothing Happened Today. Beautiful.",
+      "effects": {}
     }
   ],
   "id": "halal-cart",
   "locations": [
     {
+      "id": "midtown_side",
+      "name": "Midtown Side Street",
+      "rent": 0,
+      "footTrafficPerHour": 5,
+      "popularityBonus": 5,
       "customerMix": {
         "office": 0.55,
         "student": 0.2,
         "tourist": 0.25
-      },
-      "footTrafficPerHour": 5,
-      "id": "midtown_side",
-      "name": "Midtown Side Street",
-      "popularityBonus": 5,
-      "rent": 0
+      }
+    },
+    {
+      "id": "harlem_125",
+      "name": "125th Street, Harlem",
+      "rent": 8,
+      "footTrafficPerHour": 5.5,
+      "popularityBonus": 4,
+      "customerMix": {
+        "office": 0.35,
+        "student": 0.4,
+        "tourist": 0.25
+      }
     },
     {
       "id": "central_park",
       "name": "Central Park South",
       "rent": 15,
-      "footTrafficPerHour": 4,
+      "footTrafficPerHour": 5,
       "popularityBonus": 3,
       "customerMix": {
         "office": 0.15,
         "student": 0.25,
         "tourist": 0.6
+      }
+    },
+    {
+      "id": "jackson_heights",
+      "name": "Jackson Heights, Queens",
+      "rent": 18,
+      "footTrafficPerHour": 7,
+      "popularityBonus": 3,
+      "customerMix": {
+        "office": 0.3,
+        "student": 0.35,
+        "tourist": 0.35
+      }
+    },
+    {
+      "id": "columbia",
+      "name": "Columbia University",
+      "rent": 20,
+      "footTrafficPerHour": 8,
+      "popularityBonus": 2,
+      "customerMix": {
+        "office": 0.1,
+        "student": 0.7,
+        "tourist": 0.2
+      }
+    },
+    {
+      "id": "coney_island",
+      "name": "Coney Island Boardwalk",
+      "rent": 30,
+      "footTrafficPerHour": 7.5,
+      "popularityBonus": 2,
+      "customerMix": {
+        "office": 0.15,
+        "student": 0.35,
+        "tourist": 0.5
       }
     },
     {
@@ -172,15 +904,39 @@
       }
     },
     {
+      "id": "herald_square",
+      "name": "Herald Square",
+      "rent": 50,
+      "footTrafficPerHour": 10,
+      "popularityBonus": 0,
+      "customerMix": {
+        "office": 0.3,
+        "student": 0.2,
+        "tourist": 0.5
+      }
+    },
+    {
       "id": "times_square",
       "name": "Times Square",
       "rent": 60,
-      "footTrafficPerHour": 12,
+      "footTrafficPerHour": 13,
       "popularityBonus": 0,
       "customerMix": {
         "office": 0.2,
         "student": 0.2,
         "tourist": 0.6
+      }
+    },
+    {
+      "id": "rockefeller",
+      "name": "Rockefeller Center",
+      "rent": 85,
+      "footTrafficPerHour": 15,
+      "popularityBonus": 0,
+      "customerMix": {
+        "office": 0.4,
+        "student": 0.05,
+        "tourist": 0.55
       }
     }
   ],
@@ -220,7 +976,14 @@
       "defaultPrice": 9.5,
       "flagship": true,
       "id": "chicken_platter",
-      "name": "Chicken Over Rice"
+      "name": "Chicken Over Rice",
+      "emoji": "\ud83c\udf57",
+      "refPriceMult": 1.0,
+      "typePref": {
+        "office": 1.0,
+        "tourist": 0.9,
+        "student": 0.7
+      }
     },
     {
       "components": [
@@ -233,7 +996,83 @@
       "flagship": false,
       "id": "drink",
       "name": "Cold Drink",
-      "sideItem": true
+      "sideItem": true,
+      "emoji": "\ud83e\udd64"
+    },
+    {
+      "id": "lamb_gyro",
+      "name": "Lamb Gyro",
+      "emoji": "\ud83e\udd59",
+      "flagship": true,
+      "defaultPrice": 11.5,
+      "refPriceMult": 1.2,
+      "typePref": {
+        "office": 0.9,
+        "tourist": 1.0,
+        "student": 0.5
+      },
+      "components": [
+        {
+          "supplyId": "lamb_lb",
+          "qty": 0.45,
+          "scaledBy": "meat"
+        },
+        {
+          "supplyId": "pita_each",
+          "qty": 1
+        },
+        {
+          "supplyId": "white_sauce_oz",
+          "qty": 1.5,
+          "scaledBy": "white_sauce"
+        },
+        {
+          "supplyId": "hot_sauce_oz",
+          "qty": 0.3,
+          "scaledBy": "hot_sauce"
+        },
+        {
+          "supplyId": "container_each",
+          "qty": 1
+        }
+      ]
+    },
+    {
+      "id": "falafel_rice",
+      "name": "Falafel Over Rice",
+      "emoji": "\ud83e\uddc6",
+      "flagship": true,
+      "defaultPrice": 8.0,
+      "refPriceMult": 0.88,
+      "typePref": {
+        "office": 0.6,
+        "tourist": 0.8,
+        "student": 1.0
+      },
+      "components": [
+        {
+          "supplyId": "falafel_mix_lb",
+          "qty": 0.4
+        },
+        {
+          "supplyId": "rice_lb",
+          "qty": 0.3,
+          "scaledBy": "rice"
+        },
+        {
+          "supplyId": "pita_each",
+          "qty": 1
+        },
+        {
+          "supplyId": "white_sauce_oz",
+          "qty": 1,
+          "scaledBy": "white_sauce"
+        },
+        {
+          "supplyId": "container_each",
+          "qty": 1
+        }
+      ]
     }
   ],
   "recipeAxes": [
@@ -393,6 +1232,40 @@
       "shelfLifeDays": 36500,
       "storageCap": 1000,
       "unit": "each"
+    },
+    {
+      "id": "lamb_lb",
+      "name": "Lamb",
+      "unit": "lb",
+      "storageCap": 16,
+      "shelfLifeDays": 1,
+      "bundles": [
+        {
+          "qty": 2.5,
+          "price": 11.0
+        },
+        {
+          "qty": 8,
+          "price": 32.0
+        }
+      ]
+    },
+    {
+      "id": "falafel_mix_lb",
+      "name": "Falafel mix",
+      "unit": "lb",
+      "storageCap": 20,
+      "shelfLifeDays": 14,
+      "bundles": [
+        {
+          "qty": 4,
+          "price": 5.0
+        },
+        {
+          "qty": 16,
+          "price": 16.0
+        }
+      ]
     }
   ],
   "tagline": "Cozy capitalist street food, one platter at a time.",

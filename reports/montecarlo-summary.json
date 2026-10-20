@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19T21:04:51.829Z",
+  "generatedAt": "2026-10-20T23:39:15.702Z",
   "seeds": 200,
   "days": 30,
   "targets": {
@@ -14,14 +14,14 @@
   "verdicts": [
     {
       "preset": "standard",
-      "mean": 32.52112333333372,
-      "cv": 0.9569162064950181,
-      "p10": -4.37,
-      "meanRecoveryDays": 2.1112507856693905,
-      "maxRecoveryDays": 16,
+      "mean": 35.970456666666685,
+      "cv": 0.9987141153049709,
+      "p10": -9.66,
+      "meanRecoveryDays": 1.977792292619203,
+      "maxRecoveryDays": 18,
       "markovWorstRecovery": null,
-      "decisionDominance": 1.2093053918599488,
-      "pctLossDays": 14.283333333333333,
+      "decisionDominance": 1.1538455069617453,
+      "pctLossDays": 17.116666666666667,
       "bankruptRuns": 0,
       "seeds": 200,
       "pass": {
@@ -35,18 +35,18 @@
     },
     {
       "preset": "volatile",
-      "mean": 30.48001833333378,
-      "cv": 1.439892045850029,
-      "p10": -22.21,
-      "meanRecoveryDays": 2.190599173553719,
+      "mean": 38.546586666666656,
+      "cv": 1.2933574244230082,
+      "p10": -29.5,
+      "meanRecoveryDays": 2.0501510574018127,
       "maxRecoveryDays": 13,
       "markovWorstRecovery": null,
-      "decisionDominance": 0.8089124621696907,
-      "pctLossDays": 29.433333333333334,
+      "decisionDominance": 0.8812152554120228,
+      "pctLossDays": 25.383333333333333,
       "bankruptRuns": 0,
       "seeds": 200,
       "pass": {
-        "cv": false,
+        "cv": true,
         "p10": false,
         "recovery": false,
         "dominance": false,
@@ -56,14 +56,14 @@
     },
     {
       "preset": "flat",
-      "mean": 27.354170000000284,
-      "cv": 0.987753872314178,
-      "p10": -7.98,
-      "meanRecoveryDays": 2.0610484406104845,
-      "maxRecoveryDays": 17,
+      "mean": 36.123190000000236,
+      "cv": 0.9170794455177115,
+      "p10": -7.16,
+      "meanRecoveryDays": 1.965729952021933,
+      "maxRecoveryDays": 13,
       "markovWorstRecovery": null,
-      "decisionDominance": 1.2017695519977722,
-      "pctLossDays": 15.95,
+      "decisionDominance": 1.25593849593823,
+      "pctLossDays": 15.216666666666667,
       "bankruptRuns": 0,
       "seeds": 200,
       "pass": {
@@ -78,22 +78,22 @@
   ],
   "strategyMeans": {
     "standard": {
-      "sensible": 32.52,
-      "greedy": -5.11,
-      "sloppy": 27.59,
-      "cheapskate": 4.74
+      "sensible": 35.97,
+      "greedy": -5.48,
+      "sloppy": 31,
+      "cheapskate": 30.02
     },
     "volatile": {
-      "sensible": 30.48,
-      "greedy": -5.02,
-      "sloppy": 26.3,
-      "cheapskate": 2.98
+      "sensible": 38.55,
+      "greedy": -5.39,
+      "sloppy": 34.21,
+      "cheapskate": 29.05
     },
     "flat": {
-      "sensible": 27.35,
-      "greedy": -5.12,
-      "sloppy": 23.71,
-      "cheapskate": 6.07
+      "sensible": 36.12,
+      "greedy": -5.48,
+      "sloppy": 31.92,
+      "cheapskate": 31.51
     }
   }
 }

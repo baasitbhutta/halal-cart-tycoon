@@ -38,6 +38,20 @@ for (const k of ["document", "location", "localStorage", "history"]) {
 globalThis.window = window;
 globalThis.fetch = async () => ({ ok: true, json: async () => themeJson });
 globalThis.requestAnimationFrame = (cb) => setTimeout(cb, 0);
+globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
+// jsdom ships no canvas 2d implementation; stub a no-op context so the
+// isometric scene constructs and runs its logic without touching pixels.
+// (Real rendering is QA'd in a live browser, not here.)
+{
+  const noop = new Proxy(
+    {},
+    {
+      get: (_t, p) => (p === Symbol.toPrimitive ? () => 0 : (..._a) => noop),
+      set: () => true,
+    },
+  );
+  window.HTMLCanvasElement.prototype.getContext = () => noop;
+}
 
 const assert = (cond, msg) => {
   if (!cond) {
@@ -64,6 +78,26 @@ assert(q("#app h1")?.textContent.includes("HALAL CART"), "menu screen renders");
 clickText("New career");
 await sleep(300);
 assert(document.body.textContent.includes("Morning planning"), "planning screen renders");
+
+// 4b. price input regression: on 'input' the field must NOT be rewritten
+// (an earlier build re-assigned the value on every keystroke, eating the
+// decimal point mid-type: "10.5" became "105"). Typing "10.50" then firing
+// input must leave "10.50" in place; normalization happens on 'change'.
+clickText("Menu & Price");
+await sleep(150);
+{
+  const inp = document.querySelector('input[aria-label="Price for Chicken Over Rice"]');
+  assert(inp, "chicken price input exists");
+  inp.focus();
+  inp.value = "10.50";
+  inp.dispatchEvent(new window.Event("input", { bubbles: true }));
+  assert(inp.value === "10.50", `price field untouched while typing (got "${inp.value}")`);
+  inp.dispatchEvent(new window.Event("change", { bubbles: true }));
+  assert(inp.value === "10.5", `price normalized on blur (got "${inp.value}")`);
+  inp.value = "9.5";
+  inp.dispatchEvent(new window.Event("input", { bubbles: true }));
+  inp.dispatchEvent(new window.Event("change", { bubbles: true }));
+}
 assert(document.body.textContent.includes("°F"), "forecast renders");
 assert(q(".tabs"), "tabs render");
 
@@ -86,7 +120,7 @@ plus.click();
 clickText("OPEN CART");
 await sleep(500);
 assert(document.body.textContent.includes("Lunch rush"), "day view renders");
-assert(q(".day-scene"), "day scene renders");
+assert(q(".iso-canvas"), "day scene renders");
 
 // 8. skip -> results
 clickText("Skip");

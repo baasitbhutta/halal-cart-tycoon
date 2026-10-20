@@ -9,6 +9,7 @@ import type { Theme } from "../../src/theme.js";
 import type { Tuning } from "../../src/tuning.js";
 import { TUNING, mergeTuning } from "../../src/tuning.js";
 import type { DayPlan, DayResult, GameState, SpoilageLine } from "../../src/sim/types.js";
+import type { ChallengeDef } from "../../src/sim/challenges.js";
 import {
   applyDayResult,
   defaultPlan,
@@ -103,6 +104,19 @@ export class Game {
 
   newCareer(): void {
     this.state = newGame(this.theme, this.tuning);
+    this.prevPlan = null;
+    this.spoilage = [];
+    this.autosave();
+    this.morning = rollMorning(this.theme, this.tuning, this.nextSeed);
+    this.goto("planning");
+  }
+
+  /** Start a challenge run: fresh career at the scenario's spot and cash. */
+  startChallenge(def: ChallengeDef): void {
+    this.state = newGame(this.theme, this.tuning, def.startLocationId);
+    this.state.cash = def.startCash;
+    this.state.challengeId = def.id;
+    this.state.challengeStatus = "active";
     this.prevPlan = null;
     this.spoilage = [];
     this.autosave();
@@ -207,6 +221,9 @@ export class Game {
     const d = loadGame(slot);
     if (!d) return false;
     this.state = d.state;
+    // M3 added career totals — backfill for saves written before them.
+    this.state.lifetimeEarnings ??= 0;
+    this.state.lifetimeServed ??= 0;
     this.nextSeed = d.nextSeed;
     this.prevPlan = null;
     this.spoilage = [];

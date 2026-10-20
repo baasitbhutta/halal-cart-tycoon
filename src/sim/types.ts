@@ -34,6 +34,12 @@ export interface GameState {
   crew: string[]; // hired crew role ids (re-chosen each morning via plan)
   cartTier: number; // index into theme.cartTiers
   history: DaySummary[];
+  /** Career totals (added in M3; backfilled on load for older saves). */
+  lifetimeEarnings: number;
+  lifetimeServed: number;
+  /** Active challenge run, if this career was started from one. */
+  challengeId?: string;
+  challengeStatus?: "active" | "won" | "lost";
 }
 
 export interface Purchase {

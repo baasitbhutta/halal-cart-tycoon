@@ -132,7 +132,7 @@ export const TUNING: Tuning = {
   },
 
   service: {
-    serveMinutes: 1.5, // [TUNE] minutes per customer
+    serveMinutes: 4.0, // [TUNE] minutes per customer — 4.0 (was 1.5) so rush arrivals can outrun serving and a real line forms; see queue sweep 2026-10-20
   },
 
   satisfaction: {

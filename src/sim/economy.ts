@@ -64,26 +64,40 @@ export function stockOnHand(lots: Lot[] | undefined): number {
 }
 
 /**
- * Sensible morning shopping list. Chicken (the 1-day perishable core of the
- * menu) comes first — the day can't happen without it. Non-perishables are
- * topped up when below 35% of storage cap, but planned spending never takes
- * cash below `reserve`: a real player keeps a buffer so one rained-out day
- * can't soft-lock the cart into a no-chicken → no-sales → no-cash trap.
- * Pure: no RNG, no I/O.
+ * Sensible morning shopping list. Protein (the 1-day perishable core of the
+ * menu) comes first — the day can't happen without it; the protein budget is
+ * split across the perishable proteins by each flagship's menu-choice weight.
+ * Non-perishables are topped up when below 35% of storage cap, but planned
+ * spending never takes cash below `reserve`: a real player keeps a buffer so
+ * one rained-out day can't soft-lock the cart into a no-protein →
+ * no-sales → no-cash trap. Pure: no RNG, no I/O.
  */
 export function planPurchases(
   theme: Theme,
   cash: number,
   inventory: Record<string, Lot[]>,
-  chickenBundles: number,
+  proteinBundles: number,
   reserve = 25,
 ): Purchase[] {
   const out: Purchase[] = [];
   let remaining = cash;
-  for (const s of theme.supplies) {
-    if (s.shelfLifeDays > 1) continue;
+  // menu-choice weight per flagship: mean of typePref over customer types
+  const mains = theme.products.filter((p) => p.flagship);
+  const prodWeight = (p: Product): number => {
+    const prefs = theme.customerTypes.map((t) => p.typePref?.[t.id] ?? 1);
+    return prefs.reduce((a, b) => a + b, 0) / Math.max(1, prefs.length);
+  };
+  const perish = theme.supplies.filter((s) => s.shelfLifeDays <= 1);
+  const totalW = perish.reduce((sum, s) => {
+    const p = mains.find((m) => m.components.some((c) => c.supplyId === s.id));
+    return sum + (p ? prodWeight(p) : 0);
+  }, 0);
+  for (const s of perish) {
+    const p = mains.find((m) => m.components.some((c) => c.supplyId === s.id));
+    const share = p && totalW > 0 ? prodWeight(p) / totalW : 1 / Math.max(1, perish.length);
     const b = s.bundles[0];
-    const n = Math.min(chickenBundles, Math.floor(remaining / b.price));
+    const want = Math.max(share >= 0.15 ? 1 : 0, Math.round(proteinBundles * share));
+    const n = Math.min(want, Math.floor(remaining / b.price));
     if (n > 0) {
       out.push({ supplyId: s.id, bundleIndex: 0, count: n });
       remaining -= n * b.price;

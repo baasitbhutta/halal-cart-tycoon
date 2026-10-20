@@ -1,13 +1,15 @@
 /** Tiny formatting helpers for the UI. */
 
 export function money(v: number): string {
-  const sign = v < 0 ? "-" : "";
-  return `${sign}$${Math.abs(v).toFixed(2)}`;
+  const r = Math.round(v * 100) / 100;
+  const sign = r < 0 ? "-" : "";
+  return `${sign}$${Math.abs(r).toFixed(2)}`;
 }
 
 export function money0(v: number): string {
-  const sign = v < 0 ? "-" : "";
-  return `${sign}$${Math.round(Math.abs(v))}`;
+  const r = Math.round(v);
+  const sign = r < 0 ? "-" : "";
+  return `${sign}$${Math.abs(r)}`;
 }
 
 /** Decimal hour (12.25) -> "12:15 PM". */

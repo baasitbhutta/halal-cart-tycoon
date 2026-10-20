@@ -37,6 +37,12 @@ export interface Product {
   components: ProductComponent[];
   /** If true, customers may add this to a flagship purchase (drinks). */
   sideItem?: boolean;
+  /** Emoji for menus/UI. */
+  emoji?: string;
+  /** Willingness multiplier for this item (1 = priced like the flagship). */
+  refPriceMult?: number;
+  /** Per-customer-type choice weight among flagships (default 1). */
+  typePref?: Record<string, number>;
 }
 
 export interface RecipeAxis {
@@ -152,4 +158,9 @@ export function getProduct(theme: Theme, id: string): Product {
 
 export function flagship(theme: Theme): Product {
   return theme.products.find((p) => p.flagship)!;
+}
+
+/** All main-dish products customers choose between at the window. */
+export function flagships(theme: Theme): Product[] {
+  return theme.products.filter((p) => p.flagship);
 }

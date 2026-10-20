@@ -151,11 +151,18 @@ function basePlan(
   // planPurchases keeps a $25 cash buffer so a rained-out day can't trap the
   // cart at $0 with no chicken (see economy.ts).
   const purchases = planPurchases(theme, state.cash, state.inventory, chicken, 25);
+  // price every main off the strategy's anchor price, scaled by the item's
+  // willingness multiplier and rounded to the nearest $0.50
+  const prices: Record<string, number> = { drink: 2.0 };
+  for (const p of theme.products) {
+    if (!p.flagship) continue;
+    prices[p.id] = Math.max(4, Math.round(opts.price * (p.refPriceMult ?? 1) * 2) / 2);
+  }
   return {
     locationId: theme.locations[0].id,
     purchases,
     recipe: { ...opts.recipe },
-    prices: { [ship.id]: opts.price, drink: 2.0 },
+    prices,
     promoSpend: state.cash >= opts.promoReserve ? opts.promo : 0,
     crew: [],
     buyUpgrades: [],
