@@ -4,9 +4,20 @@
  */
 import type { Game } from "../game.js";
 import type { DayPlan, Purchase } from "../../../src/sim/types.js";
-import { stockOnHand } from "../../../src/sim/economy.js";
+import { componentQtys, stockOnHand } from "../../../src/sim/economy.js";
 import { el, esc, money, condIcon, condLabel } from "../format.js";
 import { saveGame, type SlotId } from "../save.js";
+
+/** Trim to at most 2 decimals, no trailing zeros. */
+function fmtQty(q: number): string {
+  return String(Math.round(q * 100) / 100);
+}
+
+/** Per-platter ingredient quantities at the plan's current recipe. */
+function flagshipNeeds(game: Game, plan: DayPlan): Map<string, number> {
+  const ship = game.theme.products.find((p) => !p.sideItem) ?? game.theme.products[0];
+  return new Map(componentQtys(game.tuning, ship, plan.recipe).map((c) => [c.supplyId, c.qty]));
+}
 
 type TabId = "supplies" | "recipe" | "menu" | "crew" | "upgrades" | "spot";
 const TABS: [TabId, string][] = [
@@ -147,6 +158,33 @@ function renderSupplies(game: Game, plan: DayPlan, body: HTMLElement, refresh: (
   const mult = storageMultOf(game);
   body.appendChild(el("div", "dim", "Chicken spoils overnight — buy fresh daily. Rice keeps 2 days, sauces keep for weeks."));
 
+  // platter capacity summary: the bottleneck ingredient caps the day
+  const capEl = el("div", "panel-inset");
+  const renderCap = () => {
+    const needs = flagshipNeeds(game, plan);
+    let best = Infinity;
+    let bottleneck = "";
+    for (const s of theme.supplies) {
+      const per = needs.get(s.id);
+      if (per == null || per <= 0) continue;
+      const planned = plan.purchases
+        .filter((p) => p.supplyId === s.id)
+        .reduce((sum, p) => sum + p.count * s.bundles[p.bundleIndex].qty, 0);
+      const total = stockOnHand(state.inventory[s.id]) + planned;
+      const n = Math.floor(total / per);
+      if (n < best) {
+        best = n;
+        bottleneck = s.name.toLowerCase();
+      }
+    }
+    capEl.innerHTML =
+      `<div class="name">🥘 Platters you can make: <span style="color:var(--gold-1)">${best === Infinity ? 0 : best}</span>` +
+      (bottleneck ? ` <span class="dim">— limited by ${esc(bottleneck)}</span>` : "") +
+      `</div>`;
+  };
+  renderCap();
+  body.appendChild(capEl);
+
   const counts = new Map<string, number>();
   for (const p of plan.purchases) counts.set(`${p.supplyId}:${p.bundleIndex}`, p.count);
   const sync = () => {
@@ -157,6 +195,7 @@ function renderSupplies(game: Game, plan: DayPlan, body: HTMLElement, refresh: (
       arr.push({ supplyId, bundleIndex: Number(bi), count: c });
     }
     plan.purchases = arr;
+    renderCap();
     refresh();
   };
 
@@ -168,7 +207,17 @@ function renderSupplies(game: Game, plan: DayPlan, body: HTMLElement, refresh: (
     s.bundles.forEach((b, bi) => {
       const key = `${s.id}:${bi}`;
       const row = el("div", "row");
-      row.innerHTML = `<div class="grow"><span class="sub">${b.qty} ${s.unit} — ${money(b.price)} <span class="dim">(${(b.price / b.qty).toFixed(3)}/${s.unit})</span></span></div>`;
+      // ≈ how many servings this bundle makes at the current recipe
+      let makes = "";
+      for (const prod of theme.products) {
+        const comp = componentQtys(game.tuning, prod, plan.recipe).find((c) => c.supplyId === s.id);
+        if (comp && comp.qty > 0) {
+          const n = Math.floor(b.qty / comp.qty);
+          makes = ` · <span class="dim">≈ ${n} ${prod.sideItem ? "drinks" : "platters"}</span>`;
+          break;
+        }
+      }
+      row.innerHTML = `<div class="grow"><span class="sub">${b.qty} ${s.unit} — ${money(b.price)} <span class="dim">(${(b.price / b.qty).toFixed(3)}/${s.unit})</span>${makes}</span></div>`;
       const st = el("div", "stepper");
       const minus = el("button", "", "−") as HTMLButtonElement;
       const val = el("span", "val", String(counts.get(key) ?? 0));
@@ -191,6 +240,21 @@ function renderSupplies(game: Game, plan: DayPlan, body: HTMLElement, refresh: (
 function renderRecipe(game: Game, plan: DayPlan, body: HTMLElement): void {
   const theme = game.theme;
   body.appendChild(el("div", "dim", "The sauce balance <i>is</i> the recipe. Office workers love extra white sauce; students want heat; tourists like it mild."));
+
+  // live per-platter readout: what one platter actually consumes
+  const needsEl = el("div", "panel-inset");
+  const renderNeeds = () => {
+    const needs = flagshipNeeds(game, plan);
+    const parts: string[] = [];
+    for (const s of theme.supplies) {
+      const q = needs.get(s.id);
+      if (q != null && q > 0) parts.push(`${fmtQty(q)} ${s.unit} ${esc(s.name.toLowerCase())}`);
+    }
+    needsEl.innerHTML = `<div class="name">🍱 Per platter</div><div class="sub">${parts.join(" · ")}</div>`;
+  };
+  renderNeeds();
+  body.appendChild(needsEl);
+
   for (const a of theme.recipeAxes) {
     const wrap = el("div", "panel-inset");
     const label = el("div", "name", `${esc(a.name)}: <span class="val" style="color:var(--gold-1)">${plan.recipe[a.id] ?? a.default}</span>`);
@@ -204,6 +268,7 @@ function renderRecipe(game: Game, plan: DayPlan, body: HTMLElement): void {
     slider.addEventListener("input", () => {
       plan.recipe[a.id] = Number(slider.value);
       label.querySelector(".val")!.textContent = slider.value;
+      renderNeeds();
     });
     wrap.append(label, slider, el("div", "sub dim", esc(a.blurb)));
     body.appendChild(wrap);
