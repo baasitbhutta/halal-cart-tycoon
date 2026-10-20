@@ -11,19 +11,7 @@ async function boot(): Promise<void> {
     const game = new Game(theme, root);
     // ?shot=<hour> debug: auto-start a stocked day and freeze playback there.
     if (game.shotHour != null) {
-      game.newCareer();
-      const plan = game.draftPlan();
-      plan.purchases = [
-        { supplyId: "chicken_lb", bundleIndex: 0, count: 6 },
-        { supplyId: "rice_lb", bundleIndex: 0, count: 2 },
-        { supplyId: "pita_each", bundleIndex: 0, count: 1 },
-        { supplyId: "white_sauce_oz", bundleIndex: 0, count: 1 },
-        { supplyId: "hot_sauce_oz", bundleIndex: 0, count: 1 },
-        { supplyId: "container_each", bundleIndex: 0, count: 1 },
-        { supplyId: "drink_each", bundleIndex: 0, count: 1 },
-      ];
-      plan.promoSpend = 4;
-      game.openCart(plan);
+      game.shotDay();
       return;
     }
     game.goto("menu");

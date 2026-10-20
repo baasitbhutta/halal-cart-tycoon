@@ -30,7 +30,20 @@ function pick<T>(arr: T[], rng: () => number): T {
 
 export function showDay(game: Game, plan: DayPlan, result: DayResult, jumpToHour?: number): void {
   const root = game.root;
-  const ticks = result.ticks;
+  // &fakequeue=N (debug): synthesize a queue wave for visual QA of the
+  // isometric line — the real sim's queues drain every tick (see iso.ts).
+  const fq = new URLSearchParams(window.location.search).get("fakequeue");
+  let ticks = result.ticks;
+  if (fq) {
+    const N = Math.max(1, Math.min(12, parseInt(fq) || 8));
+    ticks = result.ticks.map((t, i) => {
+      const q = i < 12 ? Math.min(N, i) : Math.max(0, N - (i - 12));
+      const pq = i === 0 ? 0 : i - 1 < 12 ? Math.min(N, i - 1) : Math.max(0, N - (i - 13));
+      const arrivals = i < 12 ? 2 : 0;
+      const served = Math.max(0, pq + arrivals - q);
+      return { ...t, arrivals, served, revenue: served * 9.5, queueEnd: q, missedPrice: 0, missedWait: 0, stockouts: 0 };
+    });
+  }
   game.mountHudTitle(`day ${result.day} — open!`);
 
   // deterministic visual rng, independent of sim rng

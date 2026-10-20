@@ -67,6 +67,33 @@ export class Game {
     else if (screen === "planning") showPlanning(this);
   }
 
+  /**
+   * ?shot= debug: open a maxed-out Times Square rush (boosted foot traffic,
+   * shot-only) so the frozen frame shows a real lunch-rush queue.
+   * Screenshot tool only — the real game balance is untouched.
+   */
+  shotDay(): void {
+    this.newCareer();
+    const ts = this.theme.locations.find((l) => l.id === "times_square")!;
+    ts.footTrafficPerHour = 40; // shot-only crowd boost
+    this.state!.locationId = "times_square";
+    this.state!.popularity["times_square"] = 100;
+    this.state!.satisfaction["times_square"] = 95;
+    const plan = this.draftPlan();
+    plan.locationId = "times_square";
+    plan.purchases = [
+      { supplyId: "chicken_lb", bundleIndex: 0, count: 10 },
+      { supplyId: "rice_lb", bundleIndex: 0, count: 3 },
+      { supplyId: "pita_each", bundleIndex: 0, count: 3 },
+      { supplyId: "white_sauce_oz", bundleIndex: 0, count: 2 },
+      { supplyId: "hot_sauce_oz", bundleIndex: 0, count: 2 },
+      { supplyId: "container_each", bundleIndex: 0, count: 3 },
+      { supplyId: "drink_each", bundleIndex: 0, count: 3 },
+    ];
+    plan.promoSpend = 6;
+    this.openCart(plan);
+  }
+
   showMenu(): void {
     this.state = null;
     this.goto("menu");

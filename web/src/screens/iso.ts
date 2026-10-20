@@ -220,15 +220,15 @@ export class IsoScene {
   // ---------- animation ----------
   private update(dt: number): void {
     // steam over the grill
-    if (this.rng() < 0.5) {
+    if (this.rng() < 0.85) {
       const g = this.toScreen(CART.x + 0.3, CART.y - 0.2, 34);
       this.puffs.push({
-        x: g.x + (this.rng() - 0.5) * 8,
+        x: g.x + (this.rng() - 0.5) * 10,
         y: g.y,
-        vy: -14 - this.rng() * 10,
-        r: 2 + this.rng() * 2,
+        vy: -16 - this.rng() * 12,
+        r: 3 + this.rng() * 3,
         life: 0,
-        maxLife: 1.1 + this.rng() * 0.6,
+        maxLife: 1.2 + this.rng() * 0.6,
       });
     }
     for (const p of this.puffs) {
@@ -541,7 +541,7 @@ export class IsoScene {
   private drawPuffs(c: CanvasRenderingContext2D): void {
     for (const p of this.puffs) {
       const a = 1 - p.life / p.maxLife;
-      c.fillStyle = `rgba(245,245,245,${(a * 0.55).toFixed(2)})`;
+      c.fillStyle = `rgba(245,245,245,${(a * 0.7).toFixed(2)})`;
       c.beginPath();
       c.arc(p.x, p.y, p.r, 0, Math.PI * 2);
       c.fill();
