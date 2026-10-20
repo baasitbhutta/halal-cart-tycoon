@@ -1,14 +1,16 @@
 /**
- * Animated day view: plays back the sim's per-tick telemetry.
- * Clock 10:00→16:00, rush-curve chart, queue dots, ticking counters,
- * reaction bubbles (clickable for hints). 1x / 4x / Skip.
+ * Animated day view: plays back the sim's per-tick telemetry on an
+ * isometric street scene (M2). Clock 10:00→16:00, rush-curve chart,
+ * ticking counters, reaction bubbles (clickable for hints). 1x / 4x / Skip.
+ *
+ * ?shot=<hour> (debug): jumps playback to that hour and pauses — used for
+ * visual screenshots of the scene.
  */
 import type { Game } from "../game.js";
 import type { DayPlan, DayResult } from "../../../src/sim/types.js";
 import { rushAt } from "../../../src/sim/economy.js";
+import { IsoScene, ISO_W, type ComplaintCause } from "./iso.js";
 import { clock, el, esc, money } from "../format.js";
-
-const CUST_FACES = ["🧑", "👩", "🧔", "👵", "👦", "🧕", "👨‍💼", "👱‍♀️"];
 
 const COMPLAINTS: Record<string, string[]> = {
   price: ["Too pricey!", "$9.50?! Nah.", "My wallet says no.", "Not at that price!"],
@@ -22,14 +24,23 @@ const HINTS: Record<string, string> = {
   stockout: "💡 Ran out mid-rush. Buy more in the morning — chicken spoils overnight, so buy fresh daily.",
 };
 
-function pick<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
+function pick<T>(arr: T[], rng: () => number): T {
+  return arr[Math.floor(rng() * arr.length)];
 }
 
-export function showDay(game: Game, plan: DayPlan, result: DayResult): void {
+export function showDay(game: Game, plan: DayPlan, result: DayResult, jumpToHour?: number): void {
   const root = game.root;
   const ticks = result.ticks;
   game.mountHudTitle(`day ${result.day} — open!`);
+
+  // deterministic visual rng, independent of sim rng
+  let vs = result.seed >>> 0 || 1;
+  const vrng = () => {
+    vs = (Math.imul(vs ^ (vs >>> 15), 1 | vs) + 0x6d2b79f5) | 0;
+    let t = Math.imul(vs ^ (vs >>> 15), 1 | vs);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 
   const clockEl = el("div", "clock", clock(game.tuning.day.openHour));
   root.appendChild(clockEl);
@@ -49,13 +60,16 @@ export function showDay(game: Game, plan: DayPlan, result: DayResult): void {
   chartPanel.appendChild(chart);
   root.appendChild(chartPanel);
 
-  // scene
-  const scene = el("div", "day-scene");
-  const awning = el("div", "cart-awning");
-  const stand = el("div", "cart-stand", "🌯");
-  const lane = el("div", "queue-lane");
-  scene.append(awning, stand, lane);
-  root.appendChild(scene);
+  // isometric scene
+  const sceneWrap = el("div", "iso-wrap");
+  const canvas = document.createElement("canvas");
+  canvas.className = "iso-canvas";
+  sceneWrap.appendChild(canvas);
+  root.appendChild(sceneWrap);
+
+  const scene = new IsoScene(canvas);
+  scene.beginDay(result.seed);
+  scene.start();
 
   const hintBar = el("div", "hint-bar", "Tap a 💬 bubble for a hint");
   root.appendChild(hintBar);
@@ -72,6 +86,7 @@ export function showDay(game: Game, plan: DayPlan, result: DayResult): void {
   const speeds = el("div", "btn-row");
   let speed = 1;
   let skipped = false;
+  let resume: (() => void) | null = null;
   const mkSpeed = (label: string, s: number | "skip") => {
     const b = el("button", "btn-gold btn-small", label) as HTMLButtonElement;
     b.addEventListener("click", () => {
@@ -80,6 +95,11 @@ export function showDay(game: Game, plan: DayPlan, result: DayResult): void {
         speed = s;
         for (const x of speeds.children) x.classList.remove("active");
         b.classList.add("active");
+      }
+      if (resume) {
+        const r = resume;
+        resume = null;
+        r();
       }
     });
     return b;
@@ -92,15 +112,33 @@ export function showDay(game: Game, plan: DayPlan, result: DayResult): void {
 
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+  const scaleX = () => canvas.clientWidth / ISO_W;
+
+  function spawnBubbleAt(lx: number, ly: number, cause: ComplaintCause): void {
+    const k = scaleX();
+    const b = el("div", "bubble", esc(pick(COMPLAINTS[cause] ?? ["Hmm!"], vrng)));
+    b.style.left = `${lx * k}px`;
+    b.style.top = `${ly * k}px`;
+    b.addEventListener("click", () => {
+      hintBar.textContent = HINTS[cause] ?? "";
+    });
+    sceneWrap.appendChild(b);
+    setTimeout(() => b.remove(), 2700);
+  }
+
+  const jumpIdx =
+    jumpToHour != null ? ticks.findIndex((t) => t.t >= jumpToHour) : -1;
+
   (async () => {
     let visitors = 0;
     let served = 0;
     let revenue = 0;
-    const queueFaces: string[] = [];
 
     for (let i = 0; i < ticks.length; i++) {
       if (skipped) break;
       const t = ticks[i];
+      const jumping = jumpIdx >= 0 && i < jumpIdx;
+
       clockEl.textContent = clock(t.t);
       bars.forEach((b, j) => {
         b.classList.toggle("now", j === i);
@@ -111,55 +149,29 @@ export function showDay(game: Game, plan: DayPlan, result: DayResult): void {
       served += t.served;
       revenue += t.revenue;
 
-      // queue dots: grow with arrivals, shrink with served
-      for (let k = 0; k < t.arrivals; k++) queueFaces.push(pick(CUST_FACES));
-      queueFaces.splice(0, Math.min(queueFaces.length, t.served + t.missedPrice + t.missedWait + t.stockouts));
-      renderQueue(lane, queueFaces, t.queueEnd);
+      scene.setHour(t.t);
+      scene.applyTick(t, (x, y, cause) => {
+        if (!jumping) spawnBubbleAt(x, y, cause);
+      });
 
       cVis.querySelector(".v")!.textContent = String(visitors);
       cSrv.querySelector(".v")!.textContent = String(served);
       cRev.querySelector(".v")!.textContent = money(revenue).replace(".00", "");
 
-      // reaction bubbles for unhappy customers
-      const events: [string, number][] = [
-        ["price", t.missedPrice],
-        ["wait", t.missedWait],
-        ["stockout", t.stockouts],
-      ];
-      for (const [cause, n] of events) {
-        for (let k = 0; k < Math.min(n, 2); k++) {
-          spawnBubble(scene, hintBar, cause);
-        }
+      if (jumpIdx >= 0 && i === jumpIdx) {
+        // screenshot mode: freeze here until the player resumes
+        hintBar.textContent = "⏸ paused for screenshot — press 1× to resume";
+        await new Promise<void>((r) => {
+          resume = r;
+        });
       }
 
-      await sleep(450 / speed);
+      if (!jumping) await sleep(450 / speed);
     }
 
+    scene.stop();
     clockEl.textContent = "🌙 Closed";
     await sleep(600);
     game.finishDay(plan, result);
   })();
-}
-
-function renderQueue(lane: HTMLElement, faces: string[], queueEnd: number): void {
-  // Show a representative sample; the number label carries the truth.
-  lane.innerHTML = "";
-  const shown = faces.slice(-24);
-  for (const f of shown) {
-    lane.appendChild(el("div", "cust", f));
-  }
-  if (queueEnd > shown.length) {
-    lane.appendChild(el("div", "cust", `+${queueEnd - shown.length}`));
-  }
-}
-
-function spawnBubble(scene: HTMLElement, hintBar: HTMLElement, cause: string): void {
-  const b = el("div", "bubble", esc(pick(COMPLAINTS[cause] ?? ["Hmm!"])));
-  b.style.left = `${8 + Math.random() * 70}%`;
-  b.style.bottom = `${120 + Math.random() * 60}px`;
-  b.addEventListener("click", () => {
-    hintBar.textContent = HINTS[cause] ?? "";
-  });
-  scene.appendChild(b);
-  setTimeout(() => b.remove(), 2700);
 }

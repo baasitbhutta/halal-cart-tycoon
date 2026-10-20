@@ -33,6 +33,7 @@ export class Game {
   theme: Theme;
   tuning: Tuning;
   tuningOverrides: Record<string, unknown>;
+  shotHour: number | null = null; // ?shot=<hour> debug: jump day playback & pause
   state: GameState | null = null;
   nextSeed = 1;
   morning: MorningInfo | null = null;
@@ -46,6 +47,8 @@ export class Game {
     this.theme = theme;
     this.root = root;
     const { tuning, seed } = parseUrlParams(window.location.search);
+    const shot = new URLSearchParams(window.location.search).get("shot");
+    this.shotHour = shot != null && shot !== "" && !isNaN(Number(shot)) ? Number(shot) : null;
     this.tuningOverrides =
       tuning && typeof tuning === "object" && !Array.isArray(tuning)
         ? (tuning as Record<string, unknown>)
@@ -101,7 +104,7 @@ export class Game {
     const result = simulateDay(this.theme, this.tuning, this.state, plan, seed);
     this.screen = "day";
     this.root.innerHTML = "";
-    showDay(this, plan, result);
+    showDay(this, plan, result, this.shotHour ?? undefined);
   }
 
   finishDay(plan: DayPlan, result: DayResult): void {

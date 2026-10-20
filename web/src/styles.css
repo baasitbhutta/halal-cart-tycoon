@@ -191,6 +191,23 @@ table.ledger tr.total td { border-top: 2px solid var(--gold-2); border-bottom: n
   overflow: hidden;
   margin: 10px 0;
 }
+/* M2: isometric canvas scene replaces the DOM cart */
+.iso-wrap {
+  position: relative;
+  border: 3px solid;
+  border-color: var(--green-hi) var(--green-dk) var(--green-dk) var(--green-hi);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 10px 0;
+  line-height: 0;
+}
+.iso-canvas {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
 .cart-stand {
   position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
   width: 150px; text-align: center; font-size: 3rem;
