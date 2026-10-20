@@ -12,8 +12,8 @@ import { rushAt } from "../../../src/sim/economy.js";
 import { IsoScene, ISO_W, type ComplaintCause } from "./iso.js";
 import { clock, el, esc, money } from "../format.js";
 
-const COMPLAINTS: Record<string, string[]> = {
-  price: ["Too pricey!", "$9.50?! Nah.", "My wallet says no.", "Not at that price!"],
+const COMPLAINT_TEMPLATES: Record<string, string[]> = {
+  price: ["Too pricey!", "__PRICE__?! Nah.", "My wallet says no.", "Not at that price!"],
   wait: ["This line's too long!", "Ain't nobody got time…", "I'm outta here.", "Too slow!"],
   stockout: ["Sold out?!", "No chicken left?!"],
 };
@@ -129,7 +129,13 @@ export function showDay(game: Game, plan: DayPlan, result: DayResult, jumpToHour
 
   function spawnBubbleAt(lx: number, ly: number, cause: ComplaintCause): void {
     const k = scaleX();
-    const b = el("div", "bubble", esc(pick(COMPLAINTS[cause] ?? ["Hmm!"], vrng)));
+    // price complaints name the actual price on the menu
+    const flagship = game.theme.products.find((p) => !p.sideItem) ?? game.theme.products[0];
+    const priceLabel = money(plan.prices[flagship.id] ?? flagship.defaultPrice).replace(".00", "");
+    const templates = (COMPLAINT_TEMPLATES[cause] ?? ["Hmm!"]).map((s) =>
+      s.replace("__PRICE__", priceLabel),
+    );
+    const b = el("div", "bubble", esc(pick(templates, vrng)));
     b.style.left = `${lx * k}px`;
     b.style.top = `${ly * k}px`;
     b.addEventListener("click", () => {

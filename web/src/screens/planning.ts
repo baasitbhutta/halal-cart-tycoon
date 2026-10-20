@@ -221,10 +221,14 @@ function renderMenu(game: Game, plan: DayPlan, body: HTMLElement, refresh: () =>
     inp.step = "0.5";
     inp.value = String(plan.prices[p.id] ?? p.defaultPrice);
     inp.setAttribute("aria-label", `Price for ${p.name}`);
-    inp.addEventListener("change", () => {
+    const commit = () => {
       plan.prices[p.id] = Math.max(0, Number(inp.value) || 0);
       inp.value = String(plan.prices[p.id]);
-    });
+    };
+    // 'input' (not just 'change'): on mobile, tapping OPEN CART straight
+    // from the keyboard can skip blur, so 'change' never fires.
+    inp.addEventListener("input", commit);
+    inp.addEventListener("change", commit);
     row.appendChild(inp);
     body.appendChild(row);
   }
