@@ -49,7 +49,7 @@ function sy(x: number, y: number, z = 0): number {
 
 // ---------- world layout ----------
 const CART = { x: 3.2, y: 5.2 };
-const SPAWN = { x: 14.6, y: 9.2 };
+const SPAWN = { x: 14.6, y: 6.8 }; // east edge, ON the sidewalk (road is y>=9)
 const SERVED_EXIT = { x: 14.8, y: 5.2 };
 const ANGRY_EXIT = { x: 7.2, y: 11.6 };
 
