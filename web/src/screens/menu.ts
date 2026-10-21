@@ -3,7 +3,6 @@ import type { Game } from "../game.js";
 import { el, esc, money0 } from "../format.js";
 import { THEME_CHOICES, switchTheme } from "../themes.js";
 import { clearSlot, loadGame, slotSummary, type SlotId } from "../save.js";
-import { CHALLENGES } from "../../../src/sim/challenges.js";
 
 /**
  * Two-step confirm for destructive menu actions: first tap arms the button
@@ -61,16 +60,17 @@ export function showMenu(game: Game): void {
   }
   actions.appendChild(btns);
 
-  // challenges — scenario starts are halal-pack locations, so the section
-  // only appears when this theme contains them all; other packs get a note
-  const chalFitsTheme = CHALLENGES.every((c) =>
+  // challenges — each theme pack carries its own scenario set as data;
+  // packs without one get a note. Defs pointing at a missing location are
+  // filtered out defensively rather than offering a broken start.
+  const chalDefs = (game.theme.challenges ?? []).filter((c) =>
     game.theme.locations.some((l) => l.id === c.startLocationId),
   );
-  if (chalFitsTheme) {
+  if (chalDefs.length) {
     const chal = el("div", "panel");
     chal.appendChild(el("h2", "", "🏆 Challenges"));
     chal.appendChild(el("div", "dim", "Time-boxed careers with a goal. Win one, flex on your group chat."));
-    for (const c of CHALLENGES) {
+    for (const c of chalDefs) {
       const row = el("div", "row");
       row.innerHTML = `<div class="grow"><span class="name">${c.emoji} ${esc(c.name)} <span class="dim">— ${c.days} days</span></span><br/><span class="sub">${esc(c.blurb)}</span></div>`;
       const b = el("button", "btn-gold btn-small", "Start") as HTMLButtonElement;

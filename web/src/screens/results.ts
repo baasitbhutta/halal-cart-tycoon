@@ -106,9 +106,9 @@ export function showResults(game: Game, plan: DayPlan, result: DayResult): void 
       <div class="sub dim">Lifetime earnings crossed ${money(rankAfter.at)}. The streets know your cart now.</div>`;
     root.appendChild(up);
   }
-  const chalDef = challengeById(st.challengeId);
+  const chalDef = challengeById(st.challengeId, game.theme.challenges ?? []);
   if (chalDef) {
-    const outcome = evalChallenge(afterState);
+    const outcome = evalChallenge(afterState, game.theme.challenges ?? []);
     const pct = Math.round(goalProgress(chalDef, afterState) * 100);
     const cp = el("div", "panel center");
     if (outcome === "won") {

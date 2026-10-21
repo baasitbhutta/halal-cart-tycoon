@@ -16,5 +16,9 @@ export function loadTheme(path: string): Theme {
   if (!theme.products?.some((p) => p.flagship)) throw new Error("theme has no flagship product");
   if (!theme.locations?.length) throw new Error("theme has no locations");
   if (!theme.customerTypes?.length) throw new Error("theme has no customer types");
+  for (const c of theme.challenges ?? []) {
+    if (!theme.locations.some((l) => l.id === c.startLocationId))
+      throw new Error(`challenge ${c.id} starts at unknown location ${c.startLocationId}`);
+  }
   return theme;
 }

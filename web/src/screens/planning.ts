@@ -58,7 +58,7 @@ export function showPlanning(game: Game): void {
   );
 
   // ---- challenge banner ----
-  const chalDef = challengeById(state.challengeId);
+  const chalDef = challengeById(state.challengeId, game.theme.challenges ?? []);
   if (chalDef && state.challengeStatus === "active") {
     const daysLeft = chalDef.days - (state.day - 1);
     const pct = Math.round(goalProgress(chalDef, state) * 100);

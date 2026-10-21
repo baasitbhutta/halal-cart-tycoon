@@ -243,6 +243,23 @@ def main() -> None:
         for h, (nid, text) in zip(halal["headlines"], TACO_HEADLINES)
     ]
 
+    # challenges: numbers verbatim from the halal set, start location mapped
+    # by ladder index, copy re-voiced for LA — same scenarios, same difficulty
+    TACO_CHALLENGE_COPY = [
+        ("Quick Flip", "🏃", "Turn $200 into $500 in 16 days from the corner. Pure hustle."),
+        ("Campus Crush", "🎓", "USC students are broke but loyal. Serve 160 of them in 21 days."),
+        ("Five-Star Stand", "⭐", "Make them love you: reach 85% satisfaction at any spot within 21 days."),
+        ("Big Time", "🎬", "Hollywood rent eats the unprepared. Start with $600, end with $2,000 in 21 days."),
+    ]
+    assert len(halal["challenges"]) == len(TACO_CHALLENGE_COPY) == 4
+    halal_loc_index = {l["id"]: i for i, l in enumerate(halal["locations"])}
+    t["challenges"] = []
+    for hc, (name, emoji, blurb) in zip(halal["challenges"], TACO_CHALLENGE_COPY):
+        nc = deepcopy(hc)
+        nc["name"], nc["emoji"], nc["blurb"] = name, emoji, blurb
+        nc["startLocationId"] = t["locations"][halal_loc_index[hc["startLocationId"]]]["id"]
+        t["challenges"].append(nc)
+
     # ---- parity + referential validation ----
     errs = []
     for a, b in zip(halal["headlines"], t["headlines"]):
@@ -273,6 +290,13 @@ def main() -> None:
                 errs.append(f"customer type drift {b['id']}.{k}")
         if set(b["recipeIdeal"].values()) != set(a["recipeIdeal"].values()):
             errs.append(f"recipeIdeal drift {b['id']}")
+    taco_loc_index = {l["id"]: i for i, l in enumerate(t["locations"])}
+    for a, b in zip(halal["challenges"], t["challenges"]):
+        for k in ("id", "days", "startCash", "goal"):
+            if a[k] != b[k]:
+                errs.append(f"challenge drift {b['id']}.{k}")
+        if halal_loc_index[a["startLocationId"]] != taco_loc_index[b["startLocationId"]]:
+            errs.append(f"challenge start-ladder drift {b['id']}")
     if errs:
         print("VALIDATION FAILED:")
         [print(" -", e) for e in errs]

@@ -5,7 +5,7 @@
  * inputs, same outputs. All randomness from mulberry32(seed).
  */
 import { mulberry32, pickWeighted, poissonish } from "../rng.js";
-import { evalChallenge } from "./challenges.js";
+import { evalChallenge, type ChallengeDef } from "./challenges.js";
 import type { Headline, Product, Theme } from "../theme.js";
 import { flagships, getLocation, getSupply } from "../theme.js";
 import type { Tuning } from "../tuning.js";
@@ -440,7 +440,12 @@ export function simulateDay(
 }
 
 /** Fold a DayResult back into GameState (pre-overnight). */
-export function applyDayResult(state: GameState, plan: DayPlan, result: DayResult): GameState {
+export function applyDayResult(
+  state: GameState,
+  plan: DayPlan,
+  result: DayResult,
+  challengeDefs: ChallengeDef[] = [],
+): GameState {
   const next: GameState = {
     ...state,
     locationId: result.locationId,
@@ -465,7 +470,7 @@ export function applyDayResult(state: GameState, plan: DayPlan, result: DayResul
     ],
   };
   if (next.challengeId && next.challengeStatus === "active") {
-    next.challengeStatus = evalChallenge(next);
+    next.challengeStatus = evalChallenge(next, challengeDefs);
   }
   return next;
 }

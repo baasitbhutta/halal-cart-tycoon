@@ -1,7 +1,9 @@
 /**
  * Challenge scenarios + career ranks (M3).
  *
- * Challenges are time-boxed careers with a starting spot/cash and one goal.
+ * Challenge DEFINITIONS live in the theme packs (theme.challenges) — each
+ * pack carries its own scenario set with its own locations and copy; this
+ * module holds the types and the theme-agnostic goal/eval logic.
  * Ranks are lifetime-earnings titles — the long-arc street cred ladder.
  */
 import type { GameState } from "./types.js";
@@ -22,51 +24,11 @@ export interface ChallengeDef {
   goal: ChallengeGoal;
 }
 
-export const CHALLENGES: ChallengeDef[] = [
-  {
-    id: "quick_flip",
-    name: "Quick Flip",
-    emoji: "🏃",
-    blurb: "Turn $200 into $500 in 16 days from the side street. Pure hustle.",
-    days: 16,
-    startCash: 200,
-    startLocationId: "midtown_side",
-    goal: { kind: "cash", atLeast: 500 },
-  },
-  {
-    id: "campus_crush",
-    name: "Campus Crush",
-    emoji: "🎓",
-    blurb: "Columbia students are broke but loyal. Serve 160 of them in 21 days.",
-    days: 21,
-    startCash: 250,
-    startLocationId: "columbia",
-    goal: { kind: "serve", customers: 160 },
-  },
-  {
-    id: "five_star",
-    name: "Five-Star Cart",
-    emoji: "⭐",
-    blurb: "Make them love you: reach 85% satisfaction at any spot within 21 days.",
-    days: 21,
-    startCash: 200,
-    startLocationId: "midtown_side",
-    goal: { kind: "satisfaction", atLeast: 85 },
-  },
-  {
-    id: "big_time",
-    name: "Big Time",
-    emoji: "🗽",
-    blurb: "Times Square rent eats the unprepared. Start with $600, end with $2,000 in 21 days.",
-    days: 21,
-    startCash: 600,
-    startLocationId: "times_square",
-    goal: { kind: "cash", atLeast: 2000 },
-  },
-];
-
-export function challengeById(id: string | undefined): ChallengeDef | null {
-  return CHALLENGES.find((c) => c.id === id) ?? null;
+export function challengeById(
+  id: string | undefined,
+  defs: ChallengeDef[],
+): ChallengeDef | null {
+  return defs.find((c) => c.id === id) ?? null;
 }
 
 /** Human-readable goal line for HUD/results. */
@@ -102,8 +64,11 @@ export function goalProgress(def: ChallengeDef, state: GameState): number {
  * deadline day without it loses. Free-play careers (no challengeId) are
  * always "active".
  */
-export function evalChallenge(state: GameState): "active" | "won" | "lost" {
-  const def = challengeById(state.challengeId);
+export function evalChallenge(
+  state: GameState,
+  defs: ChallengeDef[],
+): "active" | "won" | "lost" {
+  const def = challengeById(state.challengeId, defs);
   if (!def) return "active";
   if (goalProgress(def, state) >= 1) return "won";
   const daysPlayed = state.day;

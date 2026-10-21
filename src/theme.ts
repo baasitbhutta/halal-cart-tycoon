@@ -5,6 +5,8 @@
  * Browser-safe: no node imports here. Node code loads packs via
  * theme-node.ts's loadTheme(); browser code fetches the JSON.
  */
+import type { ChallengeDef } from "./sim/challenges.js";
+
 export interface SupplyBundle {
   qty: number;
   price: number; // dollars for the whole bundle
@@ -146,6 +148,7 @@ export interface Theme {
   crew: CrewRole[];
   upgrades: Upgrade[];
   cartTiers: CartTier[];
+  challenges?: ChallengeDef[]; // scenario set for this pack (M4: data, not code)
 }
 
 export function getSupply(theme: Theme, id: string): Supply {
