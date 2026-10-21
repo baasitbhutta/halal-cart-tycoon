@@ -15,19 +15,24 @@ export interface SaveData {
 export type SlotId = "auto" | "1" | "2" | "3";
 export const SLOTS: SlotId[] = ["auto", "1", "2", "3"];
 
-const KEY = (s: SlotId) => `hct.save.${s}`;
+// Saves are namespaced per theme pack — a halal career and a taco career
+// never collide. Pre-M4 saves lived at the un-namespaced key; halal-cart
+// loads fall back to it so existing careers survive the upgrade.
+const KEY = (themeId: string, s: SlotId) => `hct.save.${themeId}.${s}`;
+const LEGACY_KEY = (s: SlotId) => `hct.save.${s}`;
 
-export function saveGame(slot: SlotId, data: SaveData): void {
+export function saveGame(themeId: string, slot: SlotId, data: SaveData): void {
   try {
-    localStorage.setItem(KEY(slot), JSON.stringify(data));
+    localStorage.setItem(KEY(themeId, slot), JSON.stringify(data));
   } catch {
     /* storage full / private mode — the game still runs */
   }
 }
 
-export function loadGame(slot: SlotId): SaveData | null {
+export function loadGame(themeId: string, slot: SlotId): SaveData | null {
   try {
-    const raw = localStorage.getItem(KEY(slot));
+    let raw = localStorage.getItem(KEY(themeId, slot));
+    if (!raw && themeId === "halal-cart") raw = localStorage.getItem(LEGACY_KEY(slot));
     if (!raw) return null;
     const d = JSON.parse(raw) as SaveData;
     if (d.version !== 1 || !d.state) return null;
@@ -37,16 +42,17 @@ export function loadGame(slot: SlotId): SaveData | null {
   }
 }
 
-export function slotSummary(slot: SlotId): string | null {
-  const d = loadGame(slot);
+export function slotSummary(themeId: string, slot: SlotId): string | null {
+  const d = loadGame(themeId, slot);
   if (!d) return null;
   const date = new Date(d.savedAt);
   return `Day ${d.state.day} · $${d.state.cash.toFixed(0)} · ${date.toLocaleDateString()}`;
 }
 
-export function clearSlot(slot: SlotId): void {
+export function clearSlot(themeId: string, slot: SlotId): void {
   try {
-    localStorage.removeItem(KEY(slot));
+    localStorage.removeItem(KEY(themeId, slot));
+    if (themeId === "halal-cart") localStorage.removeItem(LEGACY_KEY(slot));
   } catch {
     /* ignore */
   }

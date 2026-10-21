@@ -70,8 +70,18 @@ export function showPlanning(game: Game): void {
 
   const title = el("div", "panel center");
   title.innerHTML = `<h2>🌅 Morning planning — Day ${state.day}</h2>
-    <div class="dim">${esc(theme.locations.find((l) => l.id === state.locationId)?.name ?? "")}</div>`;
+    <div class="dim plan-loc"></div>`;
   root.appendChild(title);
+  const locLine = title.querySelector(".plan-loc")!;
+  // The header names TODAY'S spot (the plan), not yesterday's (the state) —
+  // and it updates live when the player picks a new spot in the Spot tab.
+  const refreshLocLine = () => {
+    const loc = theme.locations.find((l) => l.id === plan.locationId);
+    locLine.textContent =
+      (loc?.name ?? "") + (plan.locationId !== state.locationId ? " · moving today" : "");
+  };
+
+  refreshLocLine();
 
   // ---- overnight spoilage banner ----
   if (game.spoilage.length) {
@@ -100,10 +110,11 @@ export function showPlanning(game: Game): void {
   let active: TabId = "supplies";
 
   const refreshFooter = () => {
+    refreshLocLine();
     const pc = purchaseCost();
     const uc = upgradeCost();
     const total = pc + uc + plan.promoSpend;
-    const loc = theme.locations.find((l) => l.id === state.locationId)!;
+    const loc = theme.locations.find((l) => l.id === plan.locationId)!;
     const afterShopping = state.cash - Math.min(total, state.cash);
     // honest cash walk: purchases+upgrades+promo go out in the morning, rent
     // goes out with the day — don't show a "cash after" that pretends rent
@@ -122,7 +133,7 @@ export function showPlanning(game: Game): void {
     else if (active === "menu") renderMenu(game, plan, tabBody, refreshFooter);
     else if (active === "crew") renderCrew(game, plan, tabBody);
     else if (active === "upgrades") renderUpgrades(game, plan, tabBody, refreshFooter, renderTab);
-    else renderSpot(game, plan, tabBody, renderTab);
+    else renderSpot(game, plan, tabBody, () => { renderTab(); refreshFooter(); });
   };
 
   for (const [id, label] of TABS) {

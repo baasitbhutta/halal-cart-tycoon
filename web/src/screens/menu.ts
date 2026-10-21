@@ -1,6 +1,7 @@
 /** Main menu: new career, continue, challenges, save slots, how to play. */
 import type { Game } from "../game.js";
 import { el, esc, money0 } from "../format.js";
+import { THEME_CHOICES, switchTheme } from "../themes.js";
 import { clearSlot, loadGame, slotSummary, type SlotId } from "../save.js";
 import { CHALLENGES } from "../../../src/sim/challenges.js";
 
@@ -35,10 +36,9 @@ export function showMenu(game: Game): void {
 
   const hero = el("div", "panel center");
   hero.innerHTML = `
-    <div class="big-emoji">🌯🗽</div>
-    <h1>HALAL CART TYCOON</h1>
-    <div class="dim">Cheerful capitalism with real sting.<br/>
-    Run the cart. Mind the lunch rush. Watch the white sauce.</div>`;
+    <div class="big-emoji">${game.theme.emoji ?? "🍽️"}</div>
+    <h1>${esc(game.theme.name.toUpperCase())}</h1>
+    <div class="dim">${esc(game.theme.tagline)}</div>`;
   root.appendChild(hero);
 
   const actions = el("div", "panel");
@@ -46,14 +46,14 @@ export function showMenu(game: Game): void {
 
   const btns = el("div", "btn-row");
   const newBtn = el("button", "btn-gold", "🆕 New career") as HTMLButtonElement;
-  if (game.state || loadGame("auto")) {
+  if (game.state || loadGame(game.theme.id, "auto")) {
     armConfirm(newBtn, "⚠️ Tap again to restart", () => game.newCareer());
   } else {
     newBtn.addEventListener("click", () => game.newCareer());
   }
   btns.appendChild(newBtn);
 
-  const auto = loadGame("auto");
+  const auto = loadGame(game.theme.id, "auto");
   if (auto) {
     const cont = el("button", "btn-gold", `▶ Continue — Day ${auto.state.day}, ${money0(auto.state.cash)}`);
     cont.addEventListener("click", () => game.loadFrom("auto"));
@@ -61,29 +61,56 @@ export function showMenu(game: Game): void {
   }
   actions.appendChild(btns);
 
-  // challenges
-  const chal = el("div", "panel");
-  chal.appendChild(el("h2", "", "🏆 Challenges"));
-  chal.appendChild(el("div", "dim", "Time-boxed careers with a goal. Win one, flex on your group chat."));
-  for (const c of CHALLENGES) {
-    const row = el("div", "row");
-    row.innerHTML = `<div class="grow"><span class="name">${c.emoji} ${esc(c.name)} <span class="dim">— ${c.days} days</span></span><br/><span class="sub">${esc(c.blurb)}</span></div>`;
-    const b = el("button", "btn-gold btn-small", "Start") as HTMLButtonElement;
-    if (game.state || loadGame("auto")) {
-      armConfirm(b, "⚠️ Tap again", () => game.startChallenge(c));
-    } else {
-      b.addEventListener("click", () => game.startChallenge(c));
+  // challenges — scenario starts are halal-pack locations, so the section
+  // only appears when this theme contains them all; other packs get a note
+  const chalFitsTheme = CHALLENGES.every((c) =>
+    game.theme.locations.some((l) => l.id === c.startLocationId),
+  );
+  if (chalFitsTheme) {
+    const chal = el("div", "panel");
+    chal.appendChild(el("h2", "", "🏆 Challenges"));
+    chal.appendChild(el("div", "dim", "Time-boxed careers with a goal. Win one, flex on your group chat."));
+    for (const c of CHALLENGES) {
+      const row = el("div", "row");
+      row.innerHTML = `<div class="grow"><span class="name">${c.emoji} ${esc(c.name)} <span class="dim">— ${c.days} days</span></span><br/><span class="sub">${esc(c.blurb)}</span></div>`;
+      const b = el("button", "btn-gold btn-small", "Start") as HTMLButtonElement;
+      if (game.state || loadGame(game.theme.id, "auto")) {
+        armConfirm(b, "⚠️ Tap again", () => game.startChallenge(c));
+      } else {
+        b.addEventListener("click", () => game.startChallenge(c));
+      }
+      row.appendChild(b);
+      chal.appendChild(row);
     }
-    row.appendChild(b);
-    chal.appendChild(row);
+    root.appendChild(chal);
+  } else {
+    const note = el("div", "panel center");
+    note.innerHTML = `<div class="dim">🏆 Challenge scenarios are coming to this theme pack soon — free play and career ranks are fully live.</div>`;
+    root.appendChild(note);
   }
-  root.appendChild(chal);
+
+  // theme picker — each pack is its own game on the same engine
+  const picker = el("div", "panel");
+  picker.appendChild(el("h2", "", "🎮 Theme packs"));
+  const prow = el("div", "btn-row");
+  for (const t of THEME_CHOICES) {
+    const b = el("button", "btn-gold", `${t.emoji} ${t.name}`);
+    if (t.id === game.theme.id) {
+      b.setAttribute("disabled", "true");
+      b.textContent = `✔ ${t.emoji} ${t.name}`;
+    } else {
+      b.addEventListener("click", () => switchTheme(t.id));
+    }
+    prow.appendChild(b);
+  }
+  picker.appendChild(prow);
+  root.appendChild(picker);
 
   // save slots
   actions.appendChild(el("h3", "", "💾 Save slots"));
   (["1", "2", "3"] as SlotId[]).forEach((slot) => {
     const row = el("div", "row");
-    const sum = slotSummary(slot);
+    const sum = slotSummary(game.theme.id, slot);
     row.appendChild(el("div", "grow", `<span class="name">Slot ${slot}</span><br/><span class="sub">${sum ?? "empty"}</span>`));
     if (sum) {
       const load = el("button", "btn-gold btn-small", "Load");
@@ -91,7 +118,7 @@ export function showMenu(game: Game): void {
       const del = el("button", "btn-gold btn-small", "🗑") as HTMLButtonElement;
       del.title = "Delete slot";
       armConfirm(del, "⚠️", () => {
-        clearSlot(slot);
+        clearSlot(game.theme.id, slot);
         game.goto("menu");
       });
       row.append(load, del);

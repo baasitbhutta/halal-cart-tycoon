@@ -107,6 +107,19 @@ for (const label of ["Recipe", "Menu & Price", "Crew", "Upgrades", "Spot"]) {
   await sleep(100);
 }
 assert(document.body.textContent.includes("Times Square"), "spot tab shows new locations");
+
+// 5b. spot-move regression: picking a new spot must update the planning
+// header (it used to keep showing yesterday's spot) and tag the move.
+{
+  const before = document.querySelector(".plan-loc")?.textContent ?? "";
+  assert(before && !before.includes("moving today"), `header starts at current spot (got "${before}")`);
+  const moveBtn = qa("button").find((x) => x.textContent.includes("Move here"));
+  assert(moveBtn, "a Move here button exists");
+  moveBtn.click();
+  await sleep(150);
+  const after = document.querySelector(".plan-loc")?.textContent ?? "";
+  assert(after.includes("moving today"), `header follows the plan after a move (got "${after}")`);
+}
 clickText("Supplies");
 await sleep(100);
 
@@ -135,7 +148,7 @@ assert(document.body.textContent.includes("Day 2"), "advanced to day 2");
 assert(document.body.textContent.includes("Overnight") || document.body.textContent.includes("Morning planning"), "day 2 planning");
 
 // 10. save slots wrote to localStorage
-assert(window.localStorage.getItem("hct.save.auto"), "autosave exists");
+assert(window.localStorage.getItem("hct.save.halal-cart.auto"), "autosave exists");
 
 // 11. tuning panel: toggle, tweak a value, copy-link path
 const toggle = document.getElementById("tuning-toggle");
@@ -155,7 +168,7 @@ const slotBtn = qa("button").find((x) => x.textContent.includes("Slot 1"));
 assert(slotBtn, "slot save button exists");
 slotBtn.click();
 await sleep(100);
-assert(window.localStorage.getItem("hct.save.1"), "slot 1 save exists");
+assert(window.localStorage.getItem("hct.save.halal-cart.1"), "slot 1 save exists");
 
 console.log("\nSMOKE PASS: full loop menu -> planning -> day -> results -> day 2");
 process.exit(0);

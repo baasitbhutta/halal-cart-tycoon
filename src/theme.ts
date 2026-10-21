@@ -123,10 +123,20 @@ export interface CartTier {
   storageMult: number;
 }
 
+export interface SceneTheme {
+  signText: string;
+  cart: string;
+  cartDark: string;
+  cartLight: string;
+  stripe: string;
+}
+
 export interface Theme {
   id: string;
   name: string;
   tagline: string;
+  emoji?: string;
+  scene?: SceneTheme;
   supplies: Supply[];
   products: Product[];
   recipeAxes: RecipeAxis[];

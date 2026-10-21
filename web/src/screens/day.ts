@@ -80,7 +80,7 @@ export function showDay(game: Game, plan: DayPlan, result: DayResult, jumpToHour
   sceneWrap.appendChild(canvas);
   root.appendChild(sceneWrap);
 
-  const scene = new IsoScene(canvas);
+  const scene = new IsoScene(canvas, game.theme.scene);
   scene.beginDay(result.seed);
   scene.start();
 

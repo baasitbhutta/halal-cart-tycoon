@@ -82,7 +82,7 @@
   "headlines": [
     {
       "id": "heat_wave",
-      "text": "Heat Wave Warning: 95\u00b0F by Noon",
+      "text": "Heat Wave Warning: 95°F by Noon",
       "effects": {
         "demandMult": 1.2,
         "tempOverrideF": 95,
@@ -236,7 +236,7 @@
     },
     {
       "id": "perfect_day",
-      "text": "70\u00b0 and Sunny: The City Eats Outside Today",
+      "text": "70° and Sunny: The City Eats Outside Today",
       "effects": {
         "demandMult": 1.28
       }
@@ -402,7 +402,7 @@
     },
     {
       "id": "film_shoot",
-      "text": "Movie Shoot Closes Street \u2014 Crew Eats Local",
+      "text": "Movie Shoot Closes Street — Crew Eats Local",
       "effects": {
         "demandMult": 1.1
       }
@@ -635,14 +635,14 @@
     },
     {
       "id": "rival_closed",
-      "text": "Rival Cart Closed for 'Permit Issues' \ud83d\udc40",
+      "text": "Rival Cart Closed for 'Permit Issues' 👀",
       "effects": {
         "demandMult": 1.15
       }
     },
     {
       "id": "food_hall",
-      "text": "New Food Hall Opens \u2014 With $19 Salads",
+      "text": "New Food Hall Opens — With $19 Salads",
       "effects": {
         "demandMult": 1.1
       }
@@ -728,7 +728,7 @@
     },
     {
       "id": "inspection_a",
-      "text": "Health Inspector Gives Your Cart an A \u2014 You Post It Proudly",
+      "text": "Health Inspector Gives Your Cart an A — You Post It Proudly",
       "effects": {
         "popularityAdd": 3,
         "demandMult": 1.1
@@ -977,7 +977,7 @@
       "flagship": true,
       "id": "chicken_platter",
       "name": "Chicken Over Rice",
-      "emoji": "\ud83c\udf57",
+      "emoji": "🍗",
       "refPriceMult": 1.0,
       "typePref": {
         "office": 1.0,
@@ -997,12 +997,12 @@
       "id": "drink",
       "name": "Cold Drink",
       "sideItem": true,
-      "emoji": "\ud83e\udd64"
+      "emoji": "🥤"
     },
     {
       "id": "lamb_gyro",
       "name": "Lamb Gyro",
-      "emoji": "\ud83e\udd59",
+      "emoji": "🥙",
       "flagship": true,
       "defaultPrice": 11.5,
       "refPriceMult": 1.2,
@@ -1040,7 +1040,7 @@
     {
       "id": "falafel_rice",
       "name": "Falafel Over Rice",
-      "emoji": "\ud83e\uddc6",
+      "emoji": "🧆",
       "flagship": true,
       "defaultPrice": 8.0,
       "refPriceMult": 0.88,
@@ -1298,5 +1298,13 @@
       "name": "Second Flat-Top",
       "serveMult": 0.7
     }
-  ]
+  ],
+  "emoji": "🌯",
+  "scene": {
+    "signText": "HALAL",
+    "cart": "#b3392e",
+    "cartDark": "#7e241d",
+    "cartLight": "#d4695e",
+    "stripe": "#f5f0e6"
+  }
 }

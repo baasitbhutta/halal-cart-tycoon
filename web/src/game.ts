@@ -75,22 +75,19 @@ export class Game {
    */
   shotDay(): void {
     this.newCareer();
-    const ts = this.theme.locations.find((l) => l.id === "times_square")!;
+    const ts = [...this.theme.locations].sort((a, b) => b.footTrafficPerHour - a.footTrafficPerHour)[0];
     ts.footTrafficPerHour = 40; // shot-only crowd boost
-    this.state!.locationId = "times_square";
-    this.state!.popularity["times_square"] = 100;
-    this.state!.satisfaction["times_square"] = 95;
+    this.state!.locationId = ts.id;
+    this.state!.popularity[ts.id] = 100;
+    this.state!.satisfaction[ts.id] = 95;
     const plan = this.draftPlan();
-    plan.locationId = "times_square";
-    plan.purchases = [
-      { supplyId: "chicken_lb", bundleIndex: 0, count: 10 },
-      { supplyId: "rice_lb", bundleIndex: 0, count: 3 },
-      { supplyId: "pita_each", bundleIndex: 0, count: 3 },
-      { supplyId: "white_sauce_oz", bundleIndex: 0, count: 2 },
-      { supplyId: "hot_sauce_oz", bundleIndex: 0, count: 2 },
-      { supplyId: "container_each", bundleIndex: 0, count: 3 },
-      { supplyId: "drink_each", bundleIndex: 0, count: 3 },
-    ];
+    plan.locationId = ts.id;
+    // stock every supply in the active pack (theme-generic: bundle 0 x3)
+    plan.purchases = this.theme.supplies.map((s) => ({
+      supplyId: s.id,
+      bundleIndex: 0,
+      count: 3,
+    }));
     plan.promoSpend = 6;
     this.openCart(plan);
   }
@@ -209,16 +206,16 @@ export class Game {
 
   autosave(): void {
     const d = this.saveData();
-    if (d) saveGame("auto", d);
+    if (d) saveGame(this.theme.id, "auto", d);
   }
 
   saveTo(slot: SlotId): void {
     const d = this.saveData();
-    if (d) saveGame(slot, d);
+    if (d) saveGame(this.theme.id, slot, d);
   }
 
   loadFrom(slot: SlotId): boolean {
-    const d = loadGame(slot);
+    const d = loadGame(this.theme.id, slot);
     if (!d) return false;
     this.state = d.state;
     // M3 added career totals — backfill for saves written before them.
@@ -241,7 +238,7 @@ export class Game {
 
   mountHudTitle(sub: string): HTMLElement {
     const hud = el("div", "hud");
-    hud.innerHTML = `<span>🌯 HALAL CART TYCOON</span><span class="dim">${sub}</span>`;
+    hud.innerHTML = `<span>${this.theme.emoji ?? "🍽️"} ${this.theme.name.toUpperCase()}</span><span class="dim">${sub}</span>`;
     this.root.appendChild(hud);
     return hud;
   }

@@ -11,7 +11,17 @@
  * reactions; it keeps running even when tick playback is paused.
  */
 import type { TickSummary } from "../../../src/sim/types.js";
+import type { SceneTheme } from "../../../src/theme.js";
 import { mulberry32 } from "../../../src/rng.js";
+
+/** Halal-pack scene defaults — a theme pack overrides any of these. */
+const SCENE_DEFAULTS: Required<SceneTheme> = {
+  signText: "HALAL",
+  cart: "#b3392e",
+  cartDark: "#7e241d",
+  cartLight: "#d4695e",
+  stripe: "#f5f0e6",
+};
 
 // ---------- palette ----------
 const INK = "#20301f";
@@ -104,7 +114,13 @@ export class IsoScene {
   private raf = 0;
   private running = false;
 
-  constructor(private canvas: HTMLCanvasElement) {
+  private scene: Required<SceneTheme>;
+
+  constructor(
+    private canvas: HTMLCanvasElement,
+    scene?: SceneTheme,
+  ) {
+    this.scene = { ...SCENE_DEFAULTS, ...(scene ?? {}) };
     canvas.width = ISO_W;
     canvas.height = ISO_H;
     const ctx = canvas.getContext("2d");
@@ -417,7 +433,7 @@ export class IsoScene {
     c.fill();
 
     // body
-    this.isoBox(c, x, y, 2.2, 1.5, 26, CART_RED, CART_DARK, CART_LIGHT);
+    this.isoBox(c, x, y, 2.2, 1.5, 26, this.scene.cart, this.scene.cartDark, this.scene.cartLight);
     // white stripe on the body faces
     const s0 = this.toScreen(x, y + 1.5, 14);
     const s1 = this.toScreen(x + 2.2, y + 1.5, 14);
@@ -455,7 +471,7 @@ export class IsoScene {
     for (let i = 0; i < 12; i++) {
       const a0 = (i / 12) * Math.PI * 2;
       const a1 = ((i + 1) / 12) * Math.PI * 2;
-      c.fillStyle = i % 2 === 0 ? CART_RED : CREAM;
+      c.fillStyle = i % 2 === 0 ? this.scene.cart : this.scene.stripe;
       c.beginPath();
       c.moveTo(apex.x, apex.y);
       c.lineTo(apex.x + Math.cos(a0) * rimR, rimY + Math.sin(a0) * rimR * 0.32);
@@ -484,7 +500,7 @@ export class IsoScene {
     c.fillStyle = INK;
     c.font = "bold 8px monospace";
     c.textAlign = "center";
-    c.fillText("HALAL", sign.x + 1, sign.y - 30);
+    c.fillText(this.scene.signText, sign.x + 1, sign.y - 30);
   }
 
   private drawPerson(c: CanvasRenderingContext2D, a: Agent): void {

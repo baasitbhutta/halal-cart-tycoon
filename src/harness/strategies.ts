@@ -31,8 +31,17 @@ export interface Strategy {
   ) => DayPlan;
 }
 
-const SENSIBLE_RECIPE = { white_sauce: 4, hot_sauce: 2, meat: 3, rice: 3 };
-const SLOPPY_RECIPE = { white_sauce: 1, hot_sauce: 5, meat: 3, rice: 3 }; // drowned in hot sauce
+/**
+ * Recipe profiles are built from the ACTIVE pack's axes — strategies must
+ * never hardcode one pack's ids (M4 thesis: harness included). In every
+ * pack the axes are [mild sauce, hot sauce, meat, rice] in file order.
+ */
+function recipeFor(theme: Theme, mild: number, hot: number): Record<string, number> {
+  const sauces = theme.recipeAxes.filter((a) => a.id !== "meat" && a.id !== "rice");
+  return { [sauces[0].id]: mild, [sauces[1].id]: hot, meat: 3, rice: 3 };
+}
+const sensibleRecipe = (theme: Theme) => recipeFor(theme, 4, 2);
+const sloppyRecipe = (theme: Theme) => recipeFor(theme, 1, 5); // drowned in hot sauce
 
 /**
  * Chicken bundles sized to the FORECAST day's expected demand, with headroom
@@ -81,9 +90,11 @@ function chickenToDemand(
     CONVERSION;
   const buyFor = expectedSales * NEWSVENDOR;
   const meatMult = tuning.recipe.sliderBase + tuning.recipe.sliderStep * ((recipe.meat ?? 3) - 3);
-  const chickenLb = buyFor * 0.5 * meatMult; // 0.5 lb per platter at meat=3
-  const bundle = theme.supplies.find((s) => s.id === "chicken_lb")!.bundles[0];
-  return Math.max(1, Math.ceil(chickenLb / bundle.qty));
+  const flagship = theme.products.find((p) => p.flagship)!;
+  const meatComp = flagship.components.find((c) => c.scaledBy === "meat")!;
+  const proteinLb = buyFor * meatComp.qty * meatMult; // per-serving protein at meat=3
+  const bundle = theme.supplies.find((s) => s.id === meatComp.supplyId)!.bundles[0];
+  return Math.max(1, Math.ceil(proteinLb / bundle.qty));
 }
 
 /**
@@ -181,10 +192,10 @@ export const STRATEGIES: Record<string, Strategy> = {
         morning.forecast.conditionId === "rainy" || morning.forecast.conditionId === "cold";
       return basePlan(theme, tuning, state, dayIdx, morning, {
         price: priceForForecast(morning.forecast.conditionId, morning.headline?.effects.payMult ?? 1),
-        recipe: SENSIBLE_RECIPE,
+        recipe: sensibleRecipe(theme),
         promo: badDay ? 1 : 4,
         promoReserve: 40,
-        chickenBundles: (th, tu, st, _d, mo) => chickenToDemand(th, tu, st, SENSIBLE_RECIPE, mo),
+        chickenBundles: (th, tu, st, _d, mo) => chickenToDemand(th, tu, st, sensibleRecipe(th), mo),
       });
     },
   },
@@ -195,7 +206,7 @@ export const STRATEGIES: Record<string, Strategy> = {
     plan: (theme, tuning, state, dayIdx, morning) =>
       basePlan(theme, tuning, state, dayIdx, morning, {
         price: 18,
-        recipe: SENSIBLE_RECIPE,
+        recipe: sensibleRecipe(theme),
         promo: 8,
         promoReserve: 40,
         chickenBundles: 2, // dumb money: doesn't read the room, eats the spoilage
@@ -208,10 +219,10 @@ export const STRATEGIES: Record<string, Strategy> = {
     plan: (theme, tuning, state, dayIdx, morning) =>
       basePlan(theme, tuning, state, dayIdx, morning, {
         price: priceForForecast(morning.forecast.conditionId, morning.headline?.effects.payMult ?? 1),
-        recipe: SLOPPY_RECIPE,
+        recipe: sloppyRecipe(theme),
         promo: 4,
         promoReserve: 40,
-        chickenBundles: (th, tu, st, _d, mo) => chickenToDemand(th, tu, st, SLOPPY_RECIPE, mo),
+        chickenBundles: (th, tu, st, _d, mo) => chickenToDemand(th, tu, st, sloppyRecipe(th), mo),
       }),
   },
   cheapskate: {
@@ -221,11 +232,11 @@ export const STRATEGIES: Record<string, Strategy> = {
     plan: (theme, tuning, state, dayIdx, morning) =>
       basePlan(theme, tuning, state, dayIdx, morning, {
         price: 7,
-        recipe: SENSIBLE_RECIPE,
+        recipe: sensibleRecipe(theme),
         promo: 1,
         promoReserve: 30,
         chickenBundles: (th, tu, st, d, mo) =>
-          d % 2 === 0 ? chickenToDemand(th, tu, st, SENSIBLE_RECIPE, mo) : 0, // shops every 2nd day: off days = stockouts
+          d % 2 === 0 ? chickenToDemand(th, tu, st, sensibleRecipe(th), mo) : 0, // shops every 2nd day: off days = stockouts
       }),
   },
 };
