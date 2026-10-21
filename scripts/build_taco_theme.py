@@ -249,7 +249,7 @@ def main() -> None:
         ("Quick Flip", "🏃", "Turn $200 into $500 in 16 days from the corner. Pure hustle."),
         ("Campus Crush", "🎓", "USC students are broke but loyal. Serve 160 of them in 21 days."),
         ("Five-Star Stand", "⭐", "Make them love you: reach 85% satisfaction at any spot within 21 days."),
-        ("Big Time", "🎬", "Hollywood rent eats the unprepared. Start with $600, end with $2,000 in 21 days."),
+        ("Big Time", "🎬", "Hollywood rent eats the unprepared. Start with $600, end with $1,500 in 21 days."),
     ]
     assert len(halal["challenges"]) == len(TACO_CHALLENGE_COPY) == 4
     halal_loc_index = {l["id"]: i for i, l in enumerate(halal["locations"])}

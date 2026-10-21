@@ -1351,13 +1351,13 @@
       "id": "big_time",
       "name": "Big Time",
       "emoji": "🎬",
-      "blurb": "Hollywood rent eats the unprepared. Start with $600, end with $2,000 in 21 days.",
+      "blurb": "Hollywood rent eats the unprepared. Start with $600, end with $1,500 in 21 days.",
       "days": 21,
       "startCash": 600,
       "startLocationId": "hollywood",
       "goal": {
         "kind": "cash",
-        "atLeast": 2000
+        "atLeast": 1500
       }
     }
   ]
