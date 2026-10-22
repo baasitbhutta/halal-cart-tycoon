@@ -2,6 +2,7 @@
 import type { Game } from "../game.js";
 import type { DayPlan, DayResult } from "../../../src/sim/types.js";
 import { el, esc, money } from "../format.js";
+import { applyDayResult, overnight } from "../../../src/sim/day.js";
 import { challengeById, evalChallenge, goalProgress, goalText, rankFor } from "../../../src/sim/challenges.js";
 
 function verdict(e: number): string {
@@ -14,10 +15,24 @@ function verdict(e: number): string {
 export function showResults(game: Game, plan: DayPlan, result: DayResult): void {
   const root = game.root;
   const L = result.ledger;
+
+  // Tonight's spoilage, computed exactly at results time: overnight() is a
+  // pure function of the post-day state, so the daily P/L can show what will
+  // rot before the player commits to advancing. (advanceDay recomputes the
+  // identical result when the player moves on.) The sim's stockLost field is
+  // intraday waste and stays 0 — spoilage lives here, as the true net line.
+  const midState = applyDayResult(game.state!, plan, result, game.theme.challenges ?? []);
+  const spoilsTonight = overnight(game.theme, game.tuning, midState).spoiled;
+  const spoilTotal = spoilsTonight.reduce((s, x) => s + x.value, 0);
+  const netEarnings = Math.round((L.earnings - spoilTotal) * 100) / 100;
+  const spoilItems = spoilsTonight
+    .map((s) => `${Number.isInteger(s.qty) ? s.qty : s.qty.toFixed(1)}${s.unit} ${esc(s.supplyName)}`)
+    .join(", ");
+
   game.mountHudTitle(`day ${result.day} — results`);
 
   const head = el("div", "panel center");
-  head.innerHTML = `<h2>📊 Day ${result.day} Results</h2><div>${verdict(L.earnings)}</div>`;
+  head.innerHTML = `<h2>📊 Day ${result.day} Results</h2><div>${verdict(netEarnings)}</div>`;
   root.appendChild(head);
 
   const ledger = el("div", "panel");
@@ -31,7 +46,6 @@ export function showResults(game: Game, plan: DayPlan, result: DayResult): void 
     <table class="ledger">
       <tr><td>Revenue</td><td>${esc(sold)} — ${money(L.revenue)}</td></tr>
       <tr><td>Stock used</td><td>${money(L.stockUsed)}</td></tr>
-      <tr><td>Stock lost</td><td>${money(L.stockLost)}</td></tr>
       <tr><td>Gross profit</td><td>${money(L.grossProfit)}</td></tr>
       <tr><td>Gross margin</td><td>${L.marginPct}%</td></tr>
       <tr><td>Rent</td><td>${money(L.rent)}</td></tr>
@@ -39,7 +53,9 @@ export function showResults(game: Game, plan: DayPlan, result: DayResult): void 
       <tr><td>Wages</td><td>${money(L.wages)}</td></tr>
       ${L.upgradeCosts > 0 ? `<tr><td>Upgrades</td><td>${money(L.upgradeCosts)}</td></tr>` : ""}
       <tr><td>Total expense</td><td>${money(L.totalExpense)}</td></tr>
-      <tr class="total"><td>Earnings</td><td class="${L.earnings < 0 ? "neg" : "pos"}">${money(L.earnings)}</td></tr>
+      <tr><td>Earnings</td><td class="${L.earnings < 0 ? "neg" : "pos"}">${money(L.earnings)}</td></tr>
+      <tr><td>Stock lost (spoils tonight)${spoilItems ? `<br/><span class="dim">${spoilItems}</span>` : ""}</td><td>${spoilTotal > 0 ? "−" : ""}${money(spoilTotal)}</td></tr>
+      <tr class="total"><td>Net earnings</td><td class="${netEarnings < 0 ? "neg" : "pos"}">${money(netEarnings)}</td></tr>
     </table>`;
   root.appendChild(ledger);
 

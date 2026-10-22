@@ -64,6 +64,7 @@ const GRIDS: Record<string, Variant[]> = {
   five_star: [
     { label: "baseline 85% / 21d", patch: {} },
     { label: "88% / 21d", patch: { target: 88 } },
+    { label: "89% / 21d", patch: { target: 89 } },
     { label: "90% / 21d", patch: { target: 90 } },
     { label: "92% / 21d", patch: { target: 92 } },
     { label: "95% / 21d", patch: { target: 95 } },
