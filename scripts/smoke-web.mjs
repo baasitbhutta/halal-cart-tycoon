@@ -150,6 +150,13 @@ assert(document.body.textContent.includes("Overnight") || document.body.textCont
 // 10. save slots wrote to localStorage
 assert(window.localStorage.getItem("hct.save.halal-cart.auto"), "autosave exists");
 
+// 10b. the autosave carries the last played plan, so prices/recipe survive a reload
+const autoSave = JSON.parse(window.localStorage.getItem("hct.save.halal-cart.auto"));
+assert(
+  autoSave.plan && autoSave.plan.prices && Object.keys(autoSave.plan.prices).length > 0,
+  "autosave persists last played plan (prices survive reload)",
+);
+
 // 11. tuning panel: toggle, tweak a value, copy-link path
 const toggle = document.getElementById("tuning-toggle");
 assert(toggle, "tuning toggle exists");

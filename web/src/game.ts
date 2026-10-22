@@ -201,6 +201,7 @@ export class Game {
       state: this.state,
       nextSeed: this.nextSeed,
       tuningB64: Object.keys(this.tuningOverrides).length ? encodeTuning(this.tuningOverrides) : null,
+      plan: this.prevPlan,
     };
   }
 
@@ -222,7 +223,7 @@ export class Game {
     this.state.lifetimeEarnings ??= 0;
     this.state.lifetimeServed ??= 0;
     this.nextSeed = d.nextSeed;
-    this.prevPlan = null;
+    this.prevPlan = d.plan ?? null; // restore last played prices/recipe — old saves have no plan and fall back to defaults
     this.spoilage = [];
     if (d.tuningB64) {
       const over = decodeTuning(d.tuningB64);

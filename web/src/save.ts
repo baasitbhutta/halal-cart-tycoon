@@ -2,7 +2,7 @@
  * Save/load via localStorage. Saves happen at morning boundaries only
  * (planning screen), so a save is always a clean start-of-day state.
  */
-import type { GameState } from "../../src/sim/types.js";
+import type { DayPlan, GameState } from "../../src/sim/types.js";
 
 export interface SaveData {
   version: 1;
@@ -10,6 +10,7 @@ export interface SaveData {
   state: GameState;
   nextSeed: number;
   tuningB64: string | null; // tuning overrides, so a tuned game stays tuned
+  plan?: DayPlan | null; // last played plan — its prices/recipe/promo/crew seed the next morning's draft, including after a reload
 }
 
 export type SlotId = "auto" | "1" | "2" | "3";
