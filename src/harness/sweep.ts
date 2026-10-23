@@ -90,7 +90,7 @@ function runSweep(
       let broke = false;
       for (let d = 0; d < days; d++) {
         const r = simulateDay(theme, tuning, state, plan, 1000 + s * 7919 + d * 131);
-        state = applyDayResult(state, plan, r);
+        state = applyDayResult(state, plan, r, [], theme.products.find((p) => p.flagship)?.id);
         state = overnight(theme, tuning, state).state;
         if (state.cash < 0) broke = true;
         earnSum += r.ledger.earnings;

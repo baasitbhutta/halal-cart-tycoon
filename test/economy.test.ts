@@ -122,3 +122,17 @@ test("forgetting to buy chicken causes stockouts, not free money", () => {
   }
   assert.ok(stockouts > 0, "expected stockouts with no chicken");
 });
+
+test("history records what the player saw (the learning memory)", () => {
+  const state0 = newGame(theme, TUNING);
+  const plan = sensiblePlan(state0);
+  const r = simulateDay(theme, TUNING, state0, plan, 42);
+  const state = applyDayResult(state0, plan, r, [], "chicken_platter");
+  const h = state.history[state.history.length - 1];
+  assert.equal(h.locationId, r.locationId);
+  assert.equal(h.conditionId, r.actual.conditionId);
+  assert.equal(h.served, r.served);
+  assert.equal(h.stockouts, r.stockouts);
+  assert.equal(h.missedPrice, r.missedPrice);
+  assert.equal(h.price, 9.5); // the lead price charged that day
+});

@@ -78,7 +78,7 @@ export function runChallenge(
     });
     plan.locationId = def.startLocationId; // the scenario pins the spot
     const res = simulateDay(theme, TUNING, state, plan, seed);
-    state = applyDayResult(state, plan, res, [def]);
+    state = applyDayResult(state, plan, res, [def], theme.products.find((p) => p.flagship)?.id);
     state = overnight(theme, TUNING, state).state;
     seq.push({ satisfaction: res.satisfaction, popularity: res.popularity });
     satSeries.push(res.satisfaction);
@@ -163,14 +163,14 @@ for (const themePath of themePaths) {
           (wins.length ? `  median win day ${medWinDay}` : "  never won") +
           `  broke ${pct(brokeRate)}  median end: $${medCash} · served ${medServed} · maxSat ${medMaxSat}%`,
       );
-      if (strategyId === "sensible") {
+      if (strategyId === "regular") {
         const mk = markovAnalysis(runs.map((x) => x.seq));
         const goodMass = mk.stationary.reduce(
           (s, p, i) => (i >= 6 ? s + p : s),
           0,
         );
         console.log(
-          `   ↳ Markov (sensible): stationary P(satisfaction high) ${pct(goodMass)}, worst recovery from a bad state ${mk.worstRecoveryDays ?? "—"}d, ${mk.totalTransitions} transitions`,
+          `   ↳ Markov (regular): stationary P(satisfaction high) ${pct(goodMass)}, worst recovery from a bad state ${mk.worstRecoveryDays ?? "—"}d, ${mk.totalTransitions} transitions`,
         );
         if (def.goal.kind === "satisfaction") {
           const h = satisfactionHitting(

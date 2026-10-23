@@ -20,6 +20,22 @@ export interface DaySummary {
   earnings: number;
   satisfaction: number;
   tempF: number;
+  /**
+   * What the player saw on that day's results screen — the legitimate
+   * memory a learning player (human or harness "regular") may plan from.
+   * Optional: careers saved before these fields existed simply lack them.
+   */
+  locationId?: string;
+  /** The day's ACTUAL weather condition id (revealed during the day). */
+  conditionId?: string;
+  served?: number;
+  /** Customers lost to empty stock / sold-out items. */
+  stockouts?: number;
+  /** Visitors who looked at the price and walked. */
+  missedPrice?: number;
+  /** The flagship's price that day — the menu anchor a player remembers
+   *  charging. (Best-seller fallback when the caller passes no flagship.) */
+  price?: number;
 }
 
 export interface GameState {

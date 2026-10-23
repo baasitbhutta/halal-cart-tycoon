@@ -43,9 +43,9 @@ function applyVariant(base: ChallengeDef, v: Variant): ChallengeDef {
 
 /** Which fixture strategies to play each challenge with. */
 const STRATEGIES: Record<string, string[]> = {
-  campus_crush: ["sensible", "cheapskate", "sloppy"],
-  five_star: ["sensible", "sloppy"],
-  big_time: ["sensible"],
+  campus_crush: ["regular", "cheapskate", "sloppy"],
+  five_star: ["regular", "sloppy"],
+  big_time: ["regular"],
 };
 
 const GRIDS: Record<string, Variant[]> = {
@@ -60,6 +60,11 @@ const GRIDS: Record<string, Variant[]> = {
     { label: "120 / 21d / $350 start", patch: { target: 120, startCash: 350 } },
     { label: "100 / 21d / $350 start", patch: { target: 100, startCash: 350 } },
     { label: "80 / 28d / $350 start", patch: { target: 80, days: 28, startCash: 350 } },
+    // Added 2026-10-22: under the regular (learner) line the 160 baseline
+    // wins 98% — the interesting retune range is now ABOVE it.
+    { label: "target 200 / 21d", patch: { target: 200 } },
+    { label: "target 240 / 21d", patch: { target: 240 } },
+    { label: "target 280 / 21d", patch: { target: 280 } },
   ],
   five_star: [
     { label: "baseline 85% / 21d", patch: {} },
@@ -90,7 +95,7 @@ const median = (xs: number[]) => {
   return s.length ? s[Math.floor(s.length / 2)] : NaN;
 };
 
-/** The headline progress number for the goal kind, over sensible runs. */
+/** The headline progress number for the goal kind, over regular runs. */
 const progress = (def: ChallengeDef, runs: RunOutcome[]) => {
   if (def.goal.kind === "cash") return `$${median(runs.map((x) => x.finalCash))} end`;
   if (def.goal.kind === "serve") return `${median(runs.map((x) => x.served))} served`;
@@ -107,9 +112,9 @@ for (const cid of challengeIds) {
     console.log(`no challenge ${cid}, skipped`);
     continue;
   }
-  const sids = STRATEGIES[cid] ?? ["sensible"];
+  const sids = STRATEGIES[cid] ?? ["regular"];
   console.log(`\n══ ${theme.name} — ${base.emoji} ${base.name} retune grid (${seeds} paired seeds) ══`);
-  console.log(`   ${"variant".padEnd(32)} ${sids.map((s) => s.padEnd(14)).join(" ")}  sensible progress`);
+  console.log(`   ${"variant".padEnd(32)} ${sids.map((s) => s.padEnd(14)).join(" ")}  regular progress`);
   for (const v of variants) {
     const def = applyVariant(base, v);
     const cells: string[] = [];
@@ -119,7 +124,7 @@ for (const cid of challengeIds) {
       const wins = runs.filter((x) => x.won);
       const cell = `${pct(wins.length / runs.length)}${wins.length ? ` (day ${median(wins.map((x) => x.winDay!))})` : ""}`;
       cells.push(cell.padEnd(14));
-      if (sid === "sensible") prog = progress(def, runs);
+      if (sid === "regular") prog = progress(def, runs);
     }
     console.log(`   ${v.label.padEnd(32)} ${cells.join(" ")}  ${prog}`);
   }

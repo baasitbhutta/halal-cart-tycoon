@@ -21,7 +21,13 @@ export function showResults(game: Game, plan: DayPlan, result: DayResult): void 
   // rot before the player commits to advancing. (advanceDay recomputes the
   // identical result when the player moves on.) The sim's stockLost field is
   // intraday waste and stays 0 — spoilage lives here, as the true net line.
-  const midState = applyDayResult(game.state!, plan, result, game.theme.challenges ?? []);
+  const midState = applyDayResult(
+    game.state!,
+    plan,
+    result,
+    game.theme.challenges ?? [],
+    game.theme.products.find((p) => p.flagship)?.id,
+  );
   const spoilsTonight = overnight(game.theme, game.tuning, midState).spoiled;
   const spoilTotal = spoilsTonight.reduce((s, x) => s + x.value, 0);
   const netEarnings = Math.round((L.earnings - spoilTotal) * 100) / 100;

@@ -154,7 +154,13 @@ export class Game {
   /** Fold the day into state, run overnight, autosave, back to planning. */
   advanceDay(plan: DayPlan, result: DayResult): void {
     if (!this.state) return;
-    const mid = applyDayResult(this.state, plan, result, this.theme.challenges ?? []);
+    const mid = applyDayResult(
+      this.state,
+      plan,
+      result,
+      this.theme.challenges ?? [],
+      this.theme.products.find((p) => p.flagship)?.id,
+    );
     const { state, spoiled } = overnight(this.theme, this.tuning, mid);
     this.state = state;
     this.prevPlan = plan;

@@ -445,7 +445,18 @@ export function applyDayResult(
   plan: DayPlan,
   result: DayResult,
   challengeDefs: ChallengeDef[] = [],
+  flagshipId?: string,
 ): GameState {
+  // Recorded price = the FLAGSHIP's price (the menu anchor). Not another
+  // item's price and not the menu max: mains are priced as anchor ×
+  // per-item multipliers, so recording any other item's price feeds the
+  // multiplier back in and the recorded anchor ratchets upward daily.
+  const lead = Object.entries(result.itemsSold).sort((a, b) => b[1] - a[1])[0];
+  const leadPrice =
+    (flagshipId ? plan.prices[flagshipId] : undefined) ??
+    (lead && lead[1] > 0 ? plan.prices[lead[0]] : undefined) ??
+    state.history[state.history.length - 1]?.price ??
+    Math.max(0, ...Object.values(plan.prices));
   const next: GameState = {
     ...state,
     locationId: result.locationId,
@@ -466,6 +477,12 @@ export function applyDayResult(
         earnings: result.ledger.earnings,
         satisfaction: result.satisfaction,
         tempF: result.actual.tempF,
+        locationId: result.locationId,
+        conditionId: result.actual.conditionId,
+        served: result.served,
+        stockouts: result.stockouts,
+        missedPrice: result.missedPrice,
+        price: leadPrice,
       },
     ],
   };

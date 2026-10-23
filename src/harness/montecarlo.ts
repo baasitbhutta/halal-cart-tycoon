@@ -7,7 +7,7 @@
  *
  * Usage:
  *   node dist/harness/montecarlo.js [--presets standard,volatile,flat]
- *     [--strategies sensible,greedy,sloppy,cheapskate]
+ *     [--strategies regular,greedy,sloppy,cheapskate]
  *     [--seeds 200] [--days 30] [--theme data/halal-cart.json] [--out reports]
  *
  * Raw per-day results -> <out>/mc-<preset>-<strategy>.json (gitignored).
@@ -110,7 +110,7 @@ function runCombo(
         headline: morning.headline,
       });
       const res = simulateDay(theme, tuning, state, plan, seed);
-      state = applyDayResult(state, plan, res);
+      state = applyDayResult(state, plan, res, [], theme.products.find((p) => p.flagship)?.id);
       const night = overnight(theme, tuning, state);
       const spoilage = night.spoiled.reduce((s, l) => s + l.value, 0);
       state = night.state;
@@ -174,34 +174,38 @@ interface PresetVerdict {
   allPass: boolean;
 }
 
+// Verdicts anchor on the REGULAR line — the realistic learner — since
+// 2026-10-22. They previously anchored on a formula-following "sensible"
+// fixture that planned from the sim's own math; it was removed as
+// unrealistic, so the targets now judge the game by honest play.
 function verdictFor(preset: string, combos: Map<string, ComboResult>): PresetVerdict {
-  const sensible = combos.get("sensible")!;
+  const line = combos.get("regular")!;
   const greedy = combos.get("greedy");
   const dom = greedy
-    ? decisionDominance(sensible.earnings.mean, greedy.earnings.mean, sensible.earnings.std)
+    ? decisionDominance(line.earnings.mean, greedy.earnings.mean, line.earnings.std)
     : NaN;
-  const p10OverMean = sensible.earnings.mean > 0 ? sensible.earnings.p10 / sensible.earnings.mean : NaN;
+  const p10OverMean = line.earnings.mean > 0 ? line.earnings.p10 / line.earnings.mean : NaN;
   const pass = {
-    cv: sensible.earnings.cv >= TARGETS.cvLow && sensible.earnings.cv <= TARGETS.cvHigh,
+    cv: line.earnings.cv >= TARGETS.cvLow && line.earnings.cv <= TARGETS.cvHigh,
     p10: p10OverMean >= TARGETS.p10OverMeanAbove,
     recovery:
-      sensible.recovery.meanRecoveryDays <= TARGETS.meanRecoveryDaysBelow &&
-      sensible.recovery.maxRecoveryDays <= TARGETS.maxRecoveryDays,
+      line.recovery.meanRecoveryDays <= TARGETS.meanRecoveryDaysBelow &&
+      line.recovery.maxRecoveryDays <= TARGETS.maxRecoveryDays,
     dominance: dom > TARGETS.decisionDominanceAbove,
-    bankruptcy: sensible.bankruptRuns / sensible.seeds < TARGETS.bankruptcyRateBelow,
+    bankruptcy: line.bankruptRuns / line.seeds < TARGETS.bankruptcyRateBelow,
   };
   return {
     preset,
-    mean: sensible.earnings.mean,
-    cv: sensible.earnings.cv,
-    p10: sensible.earnings.p10,
-    meanRecoveryDays: sensible.recovery.meanRecoveryDays,
-    maxRecoveryDays: sensible.recovery.maxRecoveryDays,
-    markovWorstRecovery: sensible.markov.worstRecoveryDays,
+    mean: line.earnings.mean,
+    cv: line.earnings.cv,
+    p10: line.earnings.p10,
+    meanRecoveryDays: line.recovery.meanRecoveryDays,
+    maxRecoveryDays: line.recovery.maxRecoveryDays,
+    markovWorstRecovery: line.markov.worstRecoveryDays,
     decisionDominance: dom,
-    pctLossDays: sensible.earnings.pctNegative,
-    bankruptRuns: sensible.bankruptRuns,
-    seeds: sensible.seeds,
+    pctLossDays: line.earnings.pctNegative,
+    bankruptRuns: line.bankruptRuns,
+    seeds: line.seeds,
     pass,
     allPass: Object.values(pass).every(Boolean),
   };
@@ -233,8 +237,8 @@ function printReport(
     );
   }
 
-  // Comparison table (sensible strategy)
-  console.log("\n-- preset comparison (sensible strategy) --");
+  // Comparison table (regular strategy — the calibration line)
+  console.log("\n-- preset comparison (regular strategy) --");
   const head =
     "preset".padEnd(10) +
     "mean".padStart(8) +
@@ -275,10 +279,10 @@ function printReport(
     );
   }
 
-  // Markov detail for sensible
-  console.log("\n-- Markov recovery (sensible): expected days from each state to high satisfaction --");
+  // Markov detail for the regular line
+  console.log("\n-- Markov recovery (regular): expected days from each state to high satisfaction --");
   for (const p of presets) {
-    const m = combos.get(p)!.get("sensible")!.markov;
+    const m = combos.get(p)!.get("regular")!.markov;
     const cells: string[] = [];
     for (let i = 0; i < 9; i++) {
       const h = m.hittingTime[i];

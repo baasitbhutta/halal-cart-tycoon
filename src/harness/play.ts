@@ -49,7 +49,7 @@ export function runDays(
   for (let d = 0; d < days; d++) {
     const seed = seedBase + d * 7919;
     const r = simulateDay(theme, tuning, state, plan, seed);
-    state = applyDayResult(state, plan, r);
+    state = applyDayResult(state, plan, r, [], theme.products.find((p) => p.flagship)?.id);
     const { state: next, spoiled } = overnight(theme, tuning, state);
     state = next;
 

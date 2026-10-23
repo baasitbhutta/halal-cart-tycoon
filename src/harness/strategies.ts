@@ -6,8 +6,16 @@
  * may read state (cash, inventory, popularity, satisfaction) so it can be
  * reactive — e.g. restock perishables, skip buying when broke. Strategies
  * are analysis fixtures, not game code: they never touch the sim.
+ *
+ * THE ONE RULE of this file: no strategy plans from the sim's internal
+ * math (tuning tables, the appeal formula, willingness multipliers).
+ * Every strategy plans from what a player can know — the morning
+ * forecast/headline and its own results history. An earlier "sensible"
+ * fixture broke this rule (formula-sized buys, table-derived price
+ * bands) and was removed 2026-10-22: it measured the designer's
+ * intentions, not play. All lines are now ablations of the learner.
  */
-import { appealFactor, planPurchases, rushAt } from "../sim/economy.js";
+import { planPurchases } from "../sim/economy.js";
 import type { MorningInfo } from "../sim/day.js";
 import type { Theme } from "../theme-node.js";
 import type { Tuning } from "../tuning.js";
@@ -40,93 +48,26 @@ function recipeFor(theme: Theme, mild: number, hot: number): Record<string, numb
   const sauces = theme.recipeAxes.filter((a) => a.id !== "meat" && a.id !== "rice");
   return { [sauces[0].id]: mild, [sauces[1].id]: hot, meat: 3, rice: 3 };
 }
-const sensibleRecipe = (theme: Theme) => recipeFor(theme, 4, 2);
+const balancedRecipe = (theme: Theme) => recipeFor(theme, 4, 2);
 const sloppyRecipe = (theme: Theme) => recipeFor(theme, 1, 5); // drowned in hot sauce
 
 /**
- * Chicken bundles sized to the FORECAST day's expected demand, with headroom
- * — "buy to the forecast." Uses the same appeal factor the sim uses for
- * arrivals, so this is the skilled play the game is designed to reward (cf.
- * the 2002 guide: "maximum profitability comes from exactly matching your
- * supply with the demand curve"). Trusting a wrong forecast burns you —
- * that's the gamble, and it's readable.
+ * Servings → flagship-protein bundles. The player's OWN recipe arithmetic
+ * (per-platter quantities are shown in the game) — fair knowledge for any
+ * strategy.
  */
-function chickenToDemand(
+function bundlesForServings(
   theme: Theme,
   tuning: Tuning,
-  state: GameState,
   recipe: Record<string, number>,
-  morning: Pick<MorningInfo, "forecast" | "headline">,
+  servings: number,
 ): number {
-  const loc = theme.locations[0];
-  const pop = state.popularity[loc.id] ?? tuning.popularity.start;
-  const sat = state.satisfaction[loc.id] ?? 50;
-  const hours = tuning.day.closeHour - tuning.day.openHour;
-  // average rush multiplier over the day (trapezoid over the keyframes;
-  // rushAt is piecewise-linear so this is exact)
-  const kf = tuning.rushCurve;
-  let area = 0;
-  for (let i = 1; i < kf.length; i++) {
-    area += ((rushAt(tuning, kf[i - 1].hour) + rushAt(tuning, kf[i].hour)) / 2) * (kf[i].hour - kf[i - 1].hour);
-  }
-  const avgRush = area / Math.max(1e-9, hours);
-  const forecastCond = tuning.weather.conditions.find((c) => c.id === morning.forecast.conditionId);
-  const forecastMult = forecastCond?.demand_mult ?? 1;
-  const headlineMult = morning.headline?.effects.demandMult ?? 1;
-  // Not every arrival buys: students never pay flagship prices, some balk at
-  // the price or the line. Measured conversion ≈ 0.51.
-  // Then buy to the newsvendor 80th percentile (not the mean): underage
-  // (lost $6.50 margin) costs 4× overage (wasted $1.60 chicken), so the
-  // optimal buy is mean + ~0.84σ ≈ 1.35× mean for this demand CV.
-  const CONVERSION = 0.55;
-  const NEWSVENDOR = 1.35;
-  const expectedSales =
-    loc.footTrafficPerHour *
-    hours *
-    avgRush *
-    forecastMult *
-    headlineMult *
-    appealFactor(tuning, pop, sat) *
-    CONVERSION;
-  const buyFor = expectedSales * NEWSVENDOR;
   const meatMult = tuning.recipe.sliderBase + tuning.recipe.sliderStep * ((recipe.meat ?? 3) - 3);
   const flagship = theme.products.find((p) => p.flagship)!;
   const meatComp = flagship.components.find((c) => c.scaledBy === "meat")!;
-  const proteinLb = buyFor * meatComp.qty * meatMult; // per-serving protein at meat=3
+  const proteinLb = servings * meatComp.qty * meatMult;
   const bundle = theme.supplies.find((s) => s.id === meatComp.supplyId)!.bundles[0];
   return Math.max(1, Math.ceil(proteinLb / bundle.qty));
-}
-
-/**
- * Price to the forecast — the other half of skilled play. Willingness
- * collapses on cold days (office 10×0.8=8 < $9.50), so a rigid $9.50 bleeds
- * every cold day; a reactive player discounts the bad days and premiums the
- * hot ones. These bands come straight from the willingness math
- * (refPrice × condition willingness_mult, leaving headroom for jitter).
- */
-function priceForForecast(conditionId: string, payMult: number = 1): number {
-  let base: number;
-  switch (conditionId) {
-    case "hot_sunny":
-      base = 10.5; // office 11.5×jitter mostly clears; tourists always do
-      break;
-    case "nice":
-    case "cloudy":
-      base = 9.5; // the standard price
-      break;
-    case "rainy":
-      base = 8.0; // office 9×jitter needs room
-      break;
-    case "cold":
-      base = 7.5; // office 8×jitter, tourists 9.2×jitter — discount or die
-      break;
-    default:
-      base = 9.5;
-  }
-  // Headlines move willingness too (tiktok_slam ×0.75, tax_refund ×1.25):
-  // scale the price band so a viral slam doesn't price you out of your own
-  // lunch rush. Round to the nearest $0.50 — carts don't do $7.13.
-  return Math.max(5, Math.round((base * payMult) * 2) / 2);
 }
 
 function basePlan(
@@ -180,24 +121,142 @@ function basePlan(
   };
 }
 
+// ---------------------------------------------------------------------------
+// The REGULAR: a realistic player model. It plans from ONLY what a human
+// player can know — the morning forecast/headline and its own results
+// history (visitors, served, stockouts, price balks, the weather that
+// actually happened). It never reads the tuning tables, the appeal formula
+// or the willingness multipliers — and it is the harness's calibration
+// line: balance verdicts anchor here, and every other strategy below is
+// a one-change ablation of it.
+// ---------------------------------------------------------------------------
+
+/**
+ * Expected buyers today, learned from the cart's own track record:
+ * - demand proxy per past day = served + stockouts (people who tried to buy)
+ * - weather factors learned from its OWN days (rainy days really were
+ *   thinner), shrunk toward 1.0 while the evidence is thin
+ * - recency-weighted (last 10 days, 0.85 decay), buys mean + 0.5σ of its
+ *   own observed spread — a cautious regular; with <4 days of evidence it
+ *   pads σ, because a new player knows days swing even if they can't yet
+ *   say by how much
+ * Cold start (no history): cold = true and the plan falls back to a
+ * starter buy.
+ */
+function learnedDemand(
+  state: GameState,
+  forecastConditionId: string,
+): { servings: number; cold: boolean } {
+  const obs = (state.history ?? []).filter((h) => h.served !== undefined);
+  if (!obs.length) return { servings: 0, cold: true };
+  const tried = (h: (typeof obs)[number]) => (h.served ?? 0) + (h.stockouts ?? 0);
+  const overall = obs.reduce((s, h) => s + tried(h), 0) / obs.length;
+  const factor = (cond: string | undefined): number => {
+    if (!cond || overall <= 0) return 1;
+    const mine = obs.filter((h) => h.conditionId === cond);
+    if (!mine.length) return 1;
+    const m = mine.reduce((s, h) => s + tried(h), 0) / mine.length;
+    const w = mine.length / (mine.length + 3); // shrink toward 1 on thin evidence
+    return 1 + (m / overall - 1) * w;
+  };
+  const recent = obs.slice(-10);
+  let wsum = 0;
+  let mean = 0;
+  let sq = 0;
+  recent.forEach((h, i) => {
+    const w = Math.pow(0.85, recent.length - 1 - i);
+    const d = tried(h) / factor(h.conditionId);
+    wsum += w;
+    mean += w * d;
+    sq += w * d * d;
+  });
+  mean /= wsum;
+  let sd = Math.sqrt(Math.max(0, sq / wsum - mean * mean));
+  if (recent.length < 4) sd = Math.max(sd, 0.35 * mean);
+  return { servings: (mean + 0.5 * sd) * factor(forecastConditionId), cold: false };
+}
+
+function learnedBundles(
+  theme: Theme,
+  tuning: Tuning,
+  state: GameState,
+  recipe: Record<string, number>,
+  morning: Pick<MorningInfo, "forecast" | "headline">,
+): number {
+  const est = learnedDemand(state, morning.forecast.conditionId);
+  if (est.cold) return 2; // first shop: a couple of bundles — learn from today
+  return bundlesForServings(theme, tuning, recipe, est.servings);
+}
+
+/**
+ * Price by feedback, not by table: start at the menu's listed default,
+ * then walk $0.50 at a time off yesterday's results — a quarter of
+ * visitors balking means too dear; selling out with almost no balks means
+ * money was left on the table. It lags reality (a run of rainy-day balks
+ * walks the price down over days, not instantly) — that lag is the point.
+ */
+function learnedPrice(theme: Theme, state: GameState): number {
+  const flagship = theme.products.find((p) => p.flagship)!;
+  const obs = (state.history ?? []).filter((h) => h.price !== undefined);
+  const last = obs[obs.length - 1];
+  if (!last) return flagship.defaultPrice;
+  let price = last.price ?? flagship.defaultPrice;
+  const balk = (last.missedPrice ?? 0) / Math.max(1, last.visitors);
+  if (balk >= 0.25) price -= 0.5;
+  else if ((last.stockouts ?? 0) > 0 && balk <= 0.05) price += 0.5;
+  return Math.min(13, Math.max(5, Math.round(price * 2) / 2));
+}
+
+/**
+ * The learner's plan, parameterizable by one-change overrides: every
+ * strategy below is this plan with exactly one dimension bent, so a
+ * metric gap between two lines names its cause.
+ */
+function learnerPlan(
+  theme: Theme,
+  tuning: Tuning,
+  state: GameState,
+  dayIdx: number,
+  morning: Pick<MorningInfo, "forecast" | "headline">,
+  opts: {
+    recipe: Record<string, number>;
+    price?: number;
+    promo?: number;
+    promoReserve?: number;
+    chickenBundles?:
+      | number
+      | ((
+          theme: Theme,
+          tuning: Tuning,
+          state: GameState,
+          dayIdx: number,
+          morning: Pick<MorningInfo, "forecast" | "headline">,
+        ) => number);
+  },
+): DayPlan {
+  // Don't advertise a rained-out day: promo is demand multiplication,
+  // and multiplying ~zero demand is burning money.
+  const badDay =
+    morning.forecast.conditionId === "rainy" || morning.forecast.conditionId === "cold";
+  return basePlan(theme, tuning, state, dayIdx, morning, {
+    price: opts.price ?? learnedPrice(theme, state),
+    recipe: opts.recipe,
+    promo: opts.promo ?? (badDay ? 1 : 4),
+    promoReserve: opts.promoReserve ?? 40,
+    chickenBundles:
+      opts.chickenBundles ??
+      ((th, tu, st, _d, mo) => learnedBundles(th, tu, st, opts.recipe, mo)),
+  });
+}
+
 export const STRATEGIES: Record<string, Strategy> = {
-  sensible: {
-    id: "sensible",
-    name: "Sensible",
-    blurb: "Forecast-reactive price ($7.50-$10.50) and promo, balanced recipe, chicken bought to forecast.",
-    plan: (theme, tuning, state, dayIdx, morning) => {
-      // Don't advertise a rained-out day: promo is demand multiplication,
-      // and multiplying ~zero demand is burning money.
-      const badDay =
-        morning.forecast.conditionId === "rainy" || morning.forecast.conditionId === "cold";
-      return basePlan(theme, tuning, state, dayIdx, morning, {
-        price: priceForForecast(morning.forecast.conditionId, morning.headline?.effects.payMult ?? 1),
-        recipe: sensibleRecipe(theme),
-        promo: badDay ? 1 : 4,
-        promoReserve: 40,
-        chickenBundles: (th, tu, st, _d, mo) => chickenToDemand(th, tu, st, sensibleRecipe(th), mo),
-      });
-    },
+  regular: {
+    id: "regular",
+    name: "Regular (learns)",
+    blurb:
+      "The calibration line. A realistic player: demand learned from its own results history only (no game math), price walked by yesterday's balks/stockouts, balanced recipe, promo skipped on washout forecasts.",
+    plan: (theme, tuning, state, dayIdx, morning) =>
+      learnerPlan(theme, tuning, state, dayIdx, morning, { recipe: balancedRecipe(theme) }),
   },
   greedy: {
     id: "greedy",
@@ -206,7 +265,7 @@ export const STRATEGIES: Record<string, Strategy> = {
     plan: (theme, tuning, state, dayIdx, morning) =>
       basePlan(theme, tuning, state, dayIdx, morning, {
         price: 18,
-        recipe: sensibleRecipe(theme),
+        recipe: balancedRecipe(theme),
         promo: 8,
         promoReserve: 40,
         chickenBundles: 2, // dumb money: doesn't read the room, eats the spoilage
@@ -215,28 +274,22 @@ export const STRATEGIES: Record<string, Strategy> = {
   sloppy: {
     id: "sloppy",
     name: "Sloppy",
-    blurb: "Drowned in hot sauce, forecast-reactive price, chicken to forecast. Tests recipe load-bearing.",
+    blurb: "The regular with a drowned-in-hot-sauce recipe — the one-change ablation that tests whether recipe is load-bearing.",
     plan: (theme, tuning, state, dayIdx, morning) =>
-      basePlan(theme, tuning, state, dayIdx, morning, {
-        price: priceForForecast(morning.forecast.conditionId, morning.headline?.effects.payMult ?? 1),
-        recipe: sloppyRecipe(theme),
-        promo: 4,
-        promoReserve: 40,
-        chickenBundles: (th, tu, st, _d, mo) => chickenToDemand(th, tu, st, sloppyRecipe(th), mo),
-      }),
+      learnerPlan(theme, tuning, state, dayIdx, morning, { recipe: sloppyRecipe(theme) }),
   },
   cheapskate: {
     id: "cheapskate",
     name: "Cheapskate",
-    blurb: "$7 platter, $1 promo, buys chicken every 2nd day. Tests spoilage pressure.",
+    blurb: "$7 flat platter, $1 promo, shops every 2nd day (learned amounts). Tests the price floor + spoilage pressure against the regular line.",
     plan: (theme, tuning, state, dayIdx, morning) =>
-      basePlan(theme, tuning, state, dayIdx, morning, {
+      learnerPlan(theme, tuning, state, dayIdx, morning, {
+        recipe: balancedRecipe(theme),
         price: 7,
-        recipe: sensibleRecipe(theme),
         promo: 1,
         promoReserve: 30,
         chickenBundles: (th, tu, st, d, mo) =>
-          d % 2 === 0 ? chickenToDemand(th, tu, st, sensibleRecipe(th), mo) : 0, // shops every 2nd day: off days = stockouts
+          d % 2 === 0 ? learnedBundles(th, tu, st, balancedRecipe(th), mo) : 0, // off days = stockouts
       }),
   },
 };
