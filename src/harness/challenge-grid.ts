@@ -50,7 +50,7 @@ const STRATEGIES: Record<string, string[]> = {
 
 const GRIDS: Record<string, Variant[]> = {
   campus_crush: [
-    { label: "baseline 160 / 21d / $250", patch: {} },
+    { label: "baseline 240 / 21d / $250", patch: {} },
     { label: "target 120 / 21d", patch: { target: 120 } },
     { label: "target 100 / 21d", patch: { target: 100 } },
     { label: "target 80 / 21d", patch: { target: 80 } },
@@ -67,7 +67,7 @@ const GRIDS: Record<string, Variant[]> = {
     { label: "target 280 / 21d", patch: { target: 280 } },
   ],
   five_star: [
-    { label: "baseline 85% / 21d", patch: {} },
+    { label: "baseline 88% / 21d", patch: {} },
     { label: "88% / 21d", patch: { target: 88 } },
     { label: "89% / 21d", patch: { target: 89 } },
     { label: "90% / 21d", patch: { target: 90 } },
@@ -76,7 +76,7 @@ const GRIDS: Record<string, Variant[]> = {
     { label: "90% / 14d", patch: { target: 90, days: 14 } },
   ],
   big_time: [
-    { label: "baseline $2,000 / 21d / $600 start", patch: {} },
+    { label: "baseline $1,900 / 21d / $600 start", patch: {} },
     { label: "target $1,800 / 21d", patch: { target: 1800 } },
     { label: "target $1,700 / 21d", patch: { target: 1700 } },
     { label: "target $1,600 / 21d", patch: { target: 1600 } },

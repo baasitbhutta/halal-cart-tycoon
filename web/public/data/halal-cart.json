@@ -1325,39 +1325,39 @@
       "id": "campus_crush",
       "name": "Campus Crush",
       "emoji": "🎓",
-      "blurb": "Columbia students are broke but loyal. Serve 160 of them in 21 days.",
+      "blurb": "Columbia students are broke but loyal. Serve 240 of them in 21 days.",
       "days": 21,
       "startCash": 250,
       "startLocationId": "columbia",
       "goal": {
         "kind": "serve",
-        "customers": 160
+        "customers": 240
       }
     },
     {
       "id": "five_star",
       "name": "Five-Star Cart",
       "emoji": "⭐",
-      "blurb": "Make them love you: reach 85% satisfaction at any spot within 21 days.",
+      "blurb": "Make them love you: reach 88% satisfaction at any spot within 21 days.",
       "days": 21,
       "startCash": 200,
       "startLocationId": "midtown_side",
       "goal": {
         "kind": "satisfaction",
-        "atLeast": 85
+        "atLeast": 88
       }
     },
     {
       "id": "big_time",
       "name": "Big Time",
       "emoji": "🗽",
-      "blurb": "Times Square rent eats the unprepared. Start with $600, end with $1,500 in 21 days.",
+      "blurb": "Times Square rent eats the unprepared. Start with $600, end with $1,900 in 21 days.",
       "days": 21,
       "startCash": 600,
       "startLocationId": "times_square",
       "goal": {
         "kind": "cash",
-        "atLeast": 1500
+        "atLeast": 1900
       }
     }
   ]

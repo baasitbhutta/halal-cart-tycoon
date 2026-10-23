@@ -58,7 +58,7 @@ test("satisfaction goal uses the best location", () => {
   const s = baseState();
   s.challengeId = "five_star";
   s.day = 4;
-  s.satisfaction = { midtown_side: 60, fidi: 87 };
+  s.satisfaction = { midtown_side: 60, fidi: 90 };
   assert.equal(evalChallenge(s, defs), "won");
 });
 
